@@ -33,6 +33,7 @@ export default function ScanDetailPage() {
   const scanId = params.id as string;
   const [scan, setScan] = useState<ScanDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"issues" | "tests" | "bugs">("issues");
 
   // File bugs modal state
@@ -49,26 +50,40 @@ export default function ScanDetailPage() {
 
   useEffect(() => {
     if (!scanId) return;
-    const fetchScan = () => {
-      api.getScan(scanId).then(setScan).catch(() => {});
+    const fetchScan = async () => {
+      try {
+        const data = await api.getScan(scanId);
+        setScan(data);
+      } catch (err: any) {
+        setError(err?.message || "Failed to load scan details");
+      } finally {
+        setLoading(false);
+      }
     };
     fetchScan();
-    setLoading(false);
     const interval = setInterval(() => {
-      api.getScan(scanId).then((data) => {
-        setScan(data);
-        if (data.status === "completed" || data.status === "failed") {
-          clearInterval(interval);
-        }
-      });
+      api
+        .getScan(scanId)
+        .then((data) => {
+          setScan(data);
+          setError(null);
+          const status = data?.status ?? "pending";
+          if (status === "completed" || status === "failed") {
+            clearInterval(interval);
+          }
+        })
+        .catch(() => {
+          // Silently ignore polling errors — the initial fetch already set state
+        });
     }, 3000);
     return () => clearInterval(interval);
   }, [scanId]);
 
   // Select all issues by default when scan loads
   useEffect(() => {
-    if (scan?.issues) {
-      setSelectedIssues(new Set(scan.issues.map((i) => i.id)));
+    const issues = scan?.issues ?? [];
+    if (issues.length > 0) {
+      setSelectedIssues(new Set(issues.map((i) => i.id)));
     }
   }, [scan?.issues]);
 
@@ -81,7 +96,7 @@ export default function ScanDetailPage() {
     setFilingError("");
     try {
       const res = await api.getConnectorSchema();
-      setSchemas(res.schemas);
+      setSchemas(res?.schemas ?? []);
     } catch {
       setSchemas([]);
     }
@@ -109,12 +124,12 @@ export default function ScanDetailPage() {
 
       clearInterval(progressInterval);
       setFilingProgress(issueIds.length);
-      setFiledResults(result.filed);
-      if (result.errors?.length) {
+      setFiledResults(result?.filed ?? []);
+      if (result?.errors?.length) {
         setFilingError(result.errors.join(", "));
       }
     } catch (err: any) {
-      setFilingError(err.message || "Failed to file bugs");
+      setFilingError(err?.message || "Failed to file bugs");
     } finally {
       setFiling(false);
     }
@@ -131,6 +146,18 @@ export default function ScanDetailPage() {
 
   const currentSchema = schemas.find((s) => s.type === selectedTracker);
 
+  if (error && !scan) {
+    return (
+      <Shell>
+        <div className="card p-12 text-center">
+          <XCircle size={24} className="text-red-500 mx-auto mb-3" />
+          <p className="text-red-600 text-sm font-medium mb-1">Failed to load scan</p>
+          <p className="text-slate-400 text-xs">{error}</p>
+        </div>
+      </Shell>
+    );
+  }
+
   if (loading || !scan) {
     return (
       <Shell>
@@ -142,7 +169,13 @@ export default function ScanDetailPage() {
     );
   }
 
-  const s = scan.summary;
+  // Safe defaults for all nested data
+  const s = scan.summary ?? ({} as Record<string, any>);
+  const status = scan.status ?? "pending";
+  const issues = scan.issues ?? [];
+  const testResults = scan.test_results ?? [];
+  const bugsFiled = scan.bugs_filed ?? [];
+  const bySeverity = s.by_severity ?? {};
 
   return (
     <Shell>
@@ -150,20 +183,20 @@ export default function ScanDetailPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <StatusIndicator status={scan.status} />
-            <span className="text-xs font-mono text-slate-400">{scanId.slice(0, 8)}</span>
+            <StatusIndicator status={status} />
+            <span className="text-xs font-mono text-slate-400">{scanId?.slice(0, 8)}</span>
           </div>
           <h1 className="text-2xl font-display font-bold text-slate-900">
-            {repoName(s.repo_url)}
+            {repoName(s.repo_url ?? "")}
           </h1>
           <p className="text-xs text-slate-400 mt-1">
             <Clock size={10} className="inline mr-1" />
-            Started {formatDate(s.started_at)}
+            {s.started_at ? `Started ${formatDate(s.started_at)}` : "Not started"}
             {s.completed_at && ` — Completed ${formatDate(s.completed_at)}`}
           </p>
         </div>
 
-        {scan.status === "completed" && scan.issues.length > 0 && (
+        {status === "completed" && issues.length > 0 && (
           <button onClick={openFileBugs} className="btn-primary flex items-center gap-2">
             <Bug size={16} />
             File Bugs
@@ -177,30 +210,36 @@ export default function ScanDetailPage() {
         </div>
       )}
 
+      {error && (
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700 text-sm">
+          {error}
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-8">
-        <StatCard label="Issues" value={s.total_issues} icon={FileWarning} accent />
-        <StatCard label="Tests Generated" value={s.tests_generated} icon={TestTube2} />
+        <StatCard label="Issues" value={s.total_issues ?? 0} icon={FileWarning} accent />
+        <StatCard label="Tests Generated" value={s.tests_generated ?? 0} icon={TestTube2} />
         <StatCard
           label="Tests Passed"
-          value={s.tests_passed}
+          value={s.tests_passed ?? 0}
           icon={CheckCircle2}
-          sub={`${s.tests_failed} failed`}
+          sub={`${s.tests_failed ?? 0} failed`}
         />
-        <StatCard label="Bugs Filed" value={s.bugs_filed} icon={Bug} />
+        <StatCard label="Bugs Filed" value={s.bugs_filed ?? 0} icon={Bug} />
       </div>
 
       {/* Severity breakdown */}
-      {s.by_severity && (
+      {bySeverity && Object.keys(bySeverity).length > 0 && (
         <div className="flex gap-3 mb-8">
-          {Object.entries(s.by_severity).map(([sev, count]) =>
-            count > 0 ? (
+          {Object.entries(bySeverity)
+            .filter(([_, count]) => (count as number) > 0)
+            .map(([sev, count]) => (
               <div key={sev} className={`badge-${sev} flex items-center gap-1.5`}>
-                <span>{count}</span>
+                <span>{count as number}</span>
                 <span>{sev}</span>
               </div>
-            ) : null
-          )}
+            ))}
         </div>
       )}
 
@@ -227,14 +266,14 @@ export default function ScanDetailPage() {
       </div>
 
       {/* Tab Content */}
-      {activeTab === "issues" && <IssuesTable issues={scan.issues} />}
+      {activeTab === "issues" && <IssuesTable issues={issues} />}
 
       {activeTab === "tests" && (
         <div className="space-y-2">
-          {scan.test_results.length === 0 ? (
+          {testResults.length === 0 ? (
             <div className="card p-8 text-center text-slate-400 text-sm">No test results</div>
           ) : (
-            scan.test_results.map((t, i) => (
+            testResults.map((t, i) => (
               <div key={i} className="card p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {t.passed ? (
@@ -257,10 +296,10 @@ export default function ScanDetailPage() {
 
       {activeTab === "bugs" && (
         <div className="space-y-2">
-          {scan.bugs_filed.length === 0 ? (
+          {bugsFiled.length === 0 ? (
             <div className="card p-8 text-center text-slate-400 text-sm">No bugs filed yet</div>
           ) : (
-            scan.bugs_filed.map((b, i) => (
+            bugsFiled.map((b, i) => (
               <div key={i} className="card-hover p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Bug size={14} className="text-emerald-500" />
@@ -386,7 +425,7 @@ export default function ScanDetailPage() {
                       </div>
                       {!useSaved && (
                         <div className="space-y-3">
-                          {currentSchema.fields.map((field) => (
+                          {(currentSchema.fields ?? []).map((field) => (
                             <div key={field.key}>
                               <label className="block text-xs font-medium text-slate-600 mb-1">
                                 {field.label}
@@ -411,27 +450,27 @@ export default function ScanDetailPage() {
                   )}
 
                   {/* Step 3: Issue selection */}
-                  {selectedTracker && (
+                  {selectedTracker && issues.length > 0 && (
                     <div>
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="text-sm font-medium text-slate-700">
-                          Issues to file ({selectedIssues.size} of {scan.issues.length})
+                          Issues to file ({selectedIssues.size} of {issues.length})
                         </h3>
                         <button
                           onClick={() => {
-                            if (selectedIssues.size === scan.issues.length) {
+                            if (selectedIssues.size === issues.length) {
                               setSelectedIssues(new Set());
                             } else {
-                              setSelectedIssues(new Set(scan.issues.map((i) => i.id)));
+                              setSelectedIssues(new Set(issues.map((i) => i.id)));
                             }
                           }}
                           className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
                         >
-                          {selectedIssues.size === scan.issues.length ? "Deselect all" : "Select all"}
+                          {selectedIssues.size === issues.length ? "Deselect all" : "Select all"}
                         </button>
                       </div>
                       <div className="max-h-48 overflow-y-auto space-y-1 border border-slate-200 rounded-lg p-2">
-                        {scan.issues.map((issue) => (
+                        {issues.map((issue) => (
                           <label
                             key={issue.id}
                             className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg cursor-pointer"
@@ -447,6 +486,12 @@ export default function ScanDetailPage() {
                           </label>
                         ))}
                       </div>
+                    </div>
+                  )}
+
+                  {selectedTracker && issues.length === 0 && (
+                    <div className="card p-6 text-center text-slate-400 text-sm">
+                      No issues available to file
                     </div>
                   )}
 
