@@ -27,15 +27,17 @@ export default function DashboardPage() {
   const totalBugs = scans.reduce((acc, s) => acc + s.bugs_filed, 0);
   const completedScans = scans.filter((s) => s.status === "completed").length;
 
+  const firstName = user?.name?.split(" ")[0] || "";
+
   return (
     <Shell>
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-display font-bold text-slate-900">
-            Welcome back{user?.name ? `, ${user.name}` : ""}
+          <h1 className="text-2xl font-semibold text-gray-900">
+            Welcome back{firstName ? `, ${firstName}` : ""}
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-gray-500 mt-1">
             {tenant ? `${tenant.name} — ` : ""}Overview of all your repository scans
           </p>
         </div>
@@ -53,18 +55,15 @@ export default function DashboardPage() {
         <StatCard label="Bugs Filed" value={totalBugs} icon={ShieldCheck} />
       </div>
 
-      {/* Divider */}
-      <div className="border-t border-slate-200 mb-8" />
-
       {/* Recent Scans */}
       <div className="mb-4">
-        <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wider">Recent Scans</h2>
+        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Recent Scans</h2>
       </div>
 
       {loading ? (
-        <div className="card p-12 text-center">
-          <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-slate-400 text-sm">Loading scans...</p>
+        <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
+          <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-gray-400 text-sm">Loading scans...</p>
         </div>
       ) : (
         <ScanList scans={scans.slice(0, 10)} />

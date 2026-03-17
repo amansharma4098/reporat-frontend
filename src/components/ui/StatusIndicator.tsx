@@ -4,13 +4,13 @@ import type { ScanStatus } from "@/types";
 import { Loader2, CheckCircle2, XCircle, Clock } from "lucide-react";
 
 const statusConfig: Record<string, { color: string; icon: typeof Loader2 }> = {
-  pending: { color: "text-slate-400", icon: Clock },
+  pending: { color: "text-gray-400", icon: Clock },
   cloning: { color: "text-blue-500", icon: Loader2 },
   analyzing: { color: "text-amber-500", icon: Loader2 },
   generating_tests: { color: "text-purple-500", icon: Loader2 },
   running_tests: { color: "text-orange-500", icon: Loader2 },
   filing_bugs: { color: "text-cyan-500", icon: Loader2 },
-  completed: { color: "text-emerald-500", icon: CheckCircle2 },
+  completed: { color: "text-emerald-600", icon: CheckCircle2 },
   failed: { color: "text-red-500", icon: XCircle },
 };
 

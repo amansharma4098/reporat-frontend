@@ -24,31 +24,33 @@ export default function ScanPage() {
   return (
     <Shell>
       <div className="mb-8">
-        <h1 className="text-2xl font-display font-bold text-slate-900">New Scan</h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <h1 className="text-2xl font-semibold text-gray-900">New Scan</h1>
+        <p className="text-sm text-gray-500 mt-1">
           Scan a repository for bugs, security issues, and generate AI tests
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-8">
-        {/* Form */}
-        <div className="card p-6">
-          <h2 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-6">
-            Scan Configuration
-          </h2>
-          <ScanForm onScanStarted={handleScanStarted} />
+      <div className="grid grid-cols-5 gap-6">
+        {/* Form — 60% */}
+        <div className="col-span-3">
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">
+              Scan Configuration
+            </h2>
+            <ScanForm onScanStarted={handleScanStarted} />
+          </div>
         </div>
 
-        {/* Live Terminal */}
-        <div>
-          <h2 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-4">
+        {/* Live Terminal — 40% */}
+        <div className="col-span-2">
+          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">
             Live Output
           </h2>
           <ScanTerminal messages={messages} />
 
           {scanId && (
-            <div className="mt-4 text-xs font-mono text-slate-400">
-              Scan ID: <span className="text-slate-600">{scanId}</span>
+            <div className="mt-4 text-xs font-mono text-gray-400">
+              Scan ID: <span className="text-gray-600">{scanId}</span>
             </div>
           )}
         </div>

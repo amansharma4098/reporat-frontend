@@ -93,14 +93,11 @@ export default function ScanDetailPage() {
             clearInterval(interval);
           }
         })
-        .catch(() => {
-          // Silently ignore polling errors
-        });
+        .catch(() => {});
     }, 3000);
     return () => clearInterval(interval);
   }, [scanId]);
 
-  // Select all issues by default when scan loads
   useEffect(() => {
     const issues = scan?.issues ?? [];
     if (issues.length > 0) {
@@ -163,10 +160,10 @@ export default function ScanDetailPage() {
   if (error && !scan) {
     return (
       <Shell>
-        <div className="card p-12 text-center">
+        <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
           <XCircle size={24} className="text-red-500 mx-auto mb-3" />
           <p className="text-red-600 text-sm font-medium mb-1">Failed to load scan</p>
-          <p className="text-slate-400 text-xs">{error}</p>
+          <p className="text-gray-400 text-xs">{error}</p>
         </div>
       </Shell>
     );
@@ -175,15 +172,14 @@ export default function ScanDetailPage() {
   if (loading || !scan) {
     return (
       <Shell>
-        <div className="card p-12 text-center">
-          <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-slate-400 text-sm">Loading scan...</p>
+        <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
+          <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-gray-400 text-sm">Loading scan...</p>
         </div>
       </Shell>
     );
   }
 
-  // Safe defaults for all nested data
   const s = scan.summary ?? ({} as Record<string, any>);
   const status = scan.status ?? "pending";
   const issues = scan.issues ?? [];
@@ -191,19 +187,35 @@ export default function ScanDetailPage() {
   const bugsFiled = scan.bugs_filed ?? [];
   const bySeverity = s.by_severity ?? {};
 
+  const tabs = [
+    { key: "issues" as const, label: "Issues", icon: FileWarning },
+    { key: "tests" as const, label: "Tests", icon: TestTube2 },
+    { key: "bugs" as const, label: "Bugs", icon: Bug },
+  ];
+
   return (
     <Shell>
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <StatusIndicator status={status} />
-            <span className="text-xs font-mono text-slate-400">{scanId?.slice(0, 8)}</span>
+            {status === "completed" ? (
+              <span className="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-700 text-xs font-medium px-3 py-1 rounded-full">
+                <CheckCircle2 size={12} /> Completed
+              </span>
+            ) : status === "failed" ? (
+              <span className="inline-flex items-center gap-1.5 bg-red-100 text-red-700 text-xs font-medium px-3 py-1 rounded-full">
+                <XCircle size={12} /> Failed
+              </span>
+            ) : (
+              <StatusIndicator status={status} />
+            )}
+            <span className="text-xs font-mono text-gray-400">{scanId?.slice(0, 8)}</span>
           </div>
-          <h1 className="text-2xl font-display font-bold text-slate-900">
+          <h1 className="text-2xl font-semibold text-gray-900">
             {repoName(s.repo_url ?? "")}
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-gray-400 mt-1">
             <Clock size={10} className="inline mr-1" />
             {s.started_at ? `Started ${formatDate(s.started_at)}` : "Not started"}
             {s.completed_at && ` — Completed ${formatDate(s.completed_at)}`}
@@ -249,34 +261,35 @@ export default function ScanDetailPage() {
           {Object.entries(bySeverity)
             .filter(([_, count]) => (count as number) > 0)
             .map(([sev, count]) => (
-              <div key={sev} className={`badge-${sev} flex items-center gap-1.5`}>
-                <span>{count as number}</span>
+              <div key={sev} className={`badge-${sev} inline-flex items-center gap-1.5`}>
+                <span className="font-semibold">{count as number}</span>
                 <span>{sev}</span>
               </div>
             ))}
         </div>
       )}
 
-      <div className="border-t border-slate-200 mb-6" />
-
-      {/* Tabs */}
-      <div className="flex gap-1 mb-6">
-        {(["issues", "tests", "bugs"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-xs font-medium rounded-lg transition-all ${
-              activeTab === tab
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                : "text-slate-400 hover:text-slate-600 border border-transparent"
-            }`}
-          >
-            {tab === "issues" && <FileWarning size={12} className="inline mr-1.5" />}
-            {tab === "tests" && <TestTube2 size={12} className="inline mr-1.5" />}
-            {tab === "bugs" && <Bug size={12} className="inline mr-1.5" />}
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
+      {/* Tab bar */}
+      <div className="border-b border-gray-200 mb-6">
+        <div className="flex gap-0">
+          {tabs.map((tab) => {
+            const TabIcon = tab.icon;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-4 py-3 text-sm font-medium transition-all border-b-2 -mb-px ${
+                  activeTab === tab.key
+                    ? "border-emerald-600 text-emerald-700"
+                    : "border-transparent text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                <TabIcon size={12} className="inline mr-1.5" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Tab Content */}
@@ -285,17 +298,17 @@ export default function ScanDetailPage() {
       {activeTab === "tests" && (
         <div className="space-y-2">
           {testResults.length === 0 ? (
-            <div className="card p-8 text-center text-slate-400 text-sm">No test results</div>
+            <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-gray-400 text-sm">No test results</div>
           ) : (
             testResults.map((t, i) => (
-              <div key={i} className="card p-4 flex items-center justify-between">
+              <div key={i} className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                 <div className="flex items-center gap-3">
                   {t.passed ? (
-                    <CheckCircle2 size={16} className="text-emerald-500" />
+                    <CheckCircle2 size={16} className="text-emerald-600" />
                   ) : (
                     <XCircle size={16} className="text-red-500" />
                   )}
-                  <span className="text-sm font-mono text-slate-700">{t.test_file}</span>
+                  <span className="text-sm font-mono text-gray-700">{t.test_file}</span>
                 </div>
                 {t.error && (
                   <span className="text-xs font-mono text-red-500 truncate max-w-[300px]">
@@ -311,13 +324,13 @@ export default function ScanDetailPage() {
       {activeTab === "bugs" && (
         <div className="space-y-2">
           {bugsFiled.length === 0 ? (
-            <div className="card p-8 text-center text-slate-400 text-sm">No bugs filed yet</div>
+            <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-gray-400 text-sm">No bugs filed yet</div>
           ) : (
             bugsFiled.map((b, i) => (
-              <div key={i} className="card-hover p-4 flex items-center justify-between">
+              <div key={i} className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between hover:shadow-sm transition-all">
                 <div className="flex items-center gap-3">
-                  <Bug size={14} className="text-emerald-500" />
-                  <span className="text-sm font-mono text-slate-700">{b.tracker}</span>
+                  <Bug size={14} className="text-emerald-600" />
+                  <span className="text-sm font-mono text-gray-700">{b.tracker}</span>
                 </div>
                 {b.url && (
                   <a
@@ -337,14 +350,14 @@ export default function ScanDetailPage() {
 
       {/* File Bugs Modal */}
       {showFileBugs && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto m-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm modal-overlay">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto m-4 modal-card">
             {/* Modal header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-200">
-              <h2 className="text-lg font-display font-bold text-slate-900">File Bugs</h2>
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">File Bugs</h2>
               <button
                 onClick={() => setShowFileBugs(false)}
-                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <X size={18} />
               </button>
@@ -363,7 +376,7 @@ export default function ScanDetailPage() {
                   <div className="space-y-2">
                     {filedResults.map((r, i) => (
                       <div key={i} className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-                        <span className="text-sm text-slate-700">{r.tracker} — {r.issue_id}</span>
+                        <span className="text-sm text-gray-700">{r.tracker} — {r.issue_id}</span>
                         {r.url && (
                           <a
                             href={r.url}
@@ -393,7 +406,7 @@ export default function ScanDetailPage() {
                 <>
                   {/* Step 1: Tracker selection */}
                   <div>
-                    <h3 className="text-sm font-medium text-slate-700 mb-3">Select bug tracker</h3>
+                    <h3 className="text-sm font-medium text-gray-700 mb-3">Select bug tracker</h3>
                     <div className="grid grid-cols-2 gap-3">
                       {Object.entries(trackerLogos).map(([type, meta]) => (
                         <button
@@ -402,10 +415,10 @@ export default function ScanDetailPage() {
                             setSelectedTracker(type);
                             setCredentials({});
                           }}
-                          className={`p-4 rounded-lg border-2 transition-all text-left ${
+                          className={`p-4 rounded-xl border-2 transition-all text-left ${
                             selectedTracker === type
                               ? "border-emerald-500 bg-emerald-50"
-                              : "border-slate-200 hover:border-slate-300 bg-white"
+                              : "border-gray-200 hover:border-gray-300 bg-white"
                           }`}
                         >
                           <div className="flex items-center gap-3">
@@ -415,7 +428,7 @@ export default function ScanDetailPage() {
                             >
                               {meta.icon}
                             </div>
-                            <span className="text-sm font-medium text-slate-700">{meta.label}</span>
+                            <span className="text-sm font-medium text-gray-700">{meta.label}</span>
                           </div>
                         </button>
                       ))}
@@ -426,13 +439,13 @@ export default function ScanDetailPage() {
                   {selectedTracker && trackerFields.length > 0 && (
                     <div>
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-medium text-slate-700">Credentials</h3>
-                        <label className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer">
+                        <h3 className="text-sm font-medium text-gray-700">Credentials</h3>
+                        <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={useSaved}
                             onChange={(e) => setUseSaved(e.target.checked)}
-                            className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-500"
+                            className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                           />
                           Use saved credentials
                         </label>
@@ -441,7 +454,7 @@ export default function ScanDetailPage() {
                         <div className="space-y-3">
                           {trackerFields.map((field) => (
                             <div key={field.key}>
-                              <label className="block text-xs font-medium text-slate-600 mb-1">
+                              <label className="block text-xs font-medium text-gray-600 mb-1">
                                 {field.label}
                               </label>
                               <input
@@ -454,7 +467,7 @@ export default function ScanDetailPage() {
                                     [field.key]: e.target.value,
                                   }))
                                 }
-                                className="input-field w-full text-sm"
+                                className="input-field w-full"
                               />
                             </div>
                           ))}
@@ -467,7 +480,7 @@ export default function ScanDetailPage() {
                   {selectedTracker && issues.length > 0 && (
                     <div>
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-medium text-slate-700">
+                        <h3 className="text-sm font-medium text-gray-700">
                           Issues to file ({selectedIssues.size} of {issues.length})
                         </h3>
                         <button
@@ -483,20 +496,20 @@ export default function ScanDetailPage() {
                           {selectedIssues.size === issues.length ? "Deselect all" : "Select all"}
                         </button>
                       </div>
-                      <div className="max-h-48 overflow-y-auto space-y-1 border border-slate-200 rounded-lg p-2">
+                      <div className="max-h-48 overflow-y-auto space-y-1 border border-gray-200 rounded-lg p-2">
                         {issues.map((issue) => (
                           <label
                             key={issue.id}
-                            className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg cursor-pointer"
+                            className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
                           >
                             <input
                               type="checkbox"
                               checked={selectedIssues.has(issue.id)}
                               onChange={() => toggleIssue(issue.id)}
-                              className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-500"
+                              className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                             />
                             <span className={`badge-${issue.severity} text-[10px]`}>{issue.severity}</span>
-                            <span className="text-sm text-slate-700 truncate">{issue.title}</span>
+                            <span className="text-sm text-gray-700 truncate">{issue.title}</span>
                           </label>
                         ))}
                       </div>
@@ -504,7 +517,7 @@ export default function ScanDetailPage() {
                   )}
 
                   {selectedTracker && issues.length === 0 && (
-                    <div className="card p-6 text-center text-slate-400 text-sm">
+                    <div className="bg-white border border-gray-200 rounded-xl p-6 text-center text-gray-400 text-sm">
                       No issues available to file
                     </div>
                   )}

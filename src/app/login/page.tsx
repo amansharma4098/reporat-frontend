@@ -28,23 +28,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md page-enter">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center">
-              <span className="text-emerald-600 font-mono font-bold text-lg">R</span>
+            <div className="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center">
+              <span className="text-white font-bold text-lg">R</span>
             </div>
-            <h1 className="font-display font-bold text-2xl text-slate-900 tracking-tight">
-              Repo<span className="text-emerald-500">Rat</span>
+            <h1 className="font-bold text-2xl text-gray-900 tracking-tight">
+              RepoRat
             </h1>
           </div>
-          <p className="text-slate-400 text-sm">Sign in to your account</p>
+          <p className="text-gray-400 text-sm">Sign in to your account</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-3">
@@ -53,7 +53,7 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Email
               </label>
               <input
@@ -61,13 +61,13 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@company.com"
-                className="input-field w-full"
+                className="input-field w-full h-11"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Password
               </label>
               <input
@@ -75,7 +75,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                className="input-field w-full"
+                className="input-field w-full h-11"
                 required
               />
             </div>
@@ -83,7 +83,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full flex items-center justify-center gap-2"
+              className="btn-primary w-full h-11 flex items-center justify-center gap-2"
             >
               {loading && (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -93,7 +93,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center mt-6 text-sm text-slate-500">
+        <p className="text-center mt-6 text-sm text-gray-500">
           Don&apos;t have an account?{" "}
           <Link href="/signup" className="text-emerald-600 hover:text-emerald-700 font-medium">
             Sign up

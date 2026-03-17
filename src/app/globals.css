@@ -2,16 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 body {
-  background: #f8fafc;
-  color: #0f172a;
-  font-family: "DM Sans", sans-serif;
+  background: #f9fafb;
+  color: #111827;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
 }
 
 ::selection {
-  background: rgba(16, 185, 129, 0.2);
+  background: rgba(5, 150, 105, 0.15);
   color: #064e3b;
 }
 
@@ -20,63 +20,104 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #f9fafb;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #d1d5db;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #9ca3af;
+}
+
+/* Page enter animation */
+.page-enter {
+  animation: pageEnter 0.3s ease-out;
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Modal animations */
+.modal-overlay {
+  animation: overlayIn 0.2s ease-out;
+}
+
+.modal-card {
+  animation: modalIn 0.2s ease-out;
+}
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @layer components {
   .card {
-    @apply bg-white border border-slate-200 rounded-xl;
+    @apply bg-white border border-gray-200 rounded-xl;
   }
 
   .card-hover {
-    @apply card transition-all duration-200 hover:shadow-md hover:border-emerald-200;
+    @apply card transition-all duration-200 hover:shadow-md hover:border-gray-300;
   }
 
   .btn-primary {
-    @apply bg-emerald-500 text-white font-medium px-6 py-2.5 rounded-lg
-           hover:bg-emerald-600 transition-all duration-200
+    @apply bg-emerald-600 text-white font-medium px-4 py-2.5 rounded-lg shadow-sm
+           hover:bg-emerald-700 transition-all duration-200
            active:scale-[0.98] text-sm;
   }
 
   .btn-secondary {
-    @apply bg-white border border-slate-200 text-slate-700 px-6 py-2.5 rounded-lg
-           hover:border-emerald-300 hover:text-emerald-700 transition-all duration-200
+    @apply bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-lg
+           hover:bg-gray-50 hover:border-gray-300 transition-all duration-200
            active:scale-[0.98] text-sm;
   }
 
   .input-field {
-    @apply bg-white border border-slate-300 rounded-lg px-4 py-2.5
-           text-slate-900 placeholder-slate-400 text-sm
+    @apply bg-white border border-gray-300 rounded-lg px-4 py-2.5 h-10
+           text-gray-900 placeholder-gray-400 text-sm
            focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500
            transition-all duration-200;
   }
 
   .badge-critical {
-    @apply bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded text-xs font-mono;
+    @apply bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-medium;
   }
 
   .badge-high {
-    @apply bg-orange-50 text-orange-600 border border-orange-200 px-2 py-0.5 rounded text-xs font-mono;
+    @apply bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-medium;
   }
 
   .badge-medium {
-    @apply bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded text-xs font-mono;
+    @apply bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-medium;
   }
 
   .badge-low {
-    @apply bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded text-xs font-mono;
+    @apply bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium;
   }
 
   .badge-info {
-    @apply bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded text-xs font-mono;
+    @apply bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium;
   }
 }

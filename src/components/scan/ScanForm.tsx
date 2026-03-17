@@ -50,10 +50,10 @@ export default function ScanForm({ onScanStarted }: Props) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Repo URL */}
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">
           Repository URL
         </label>
         <input
@@ -68,7 +68,7 @@ export default function ScanForm({ onScanStarted }: Props) {
       {/* Branch + Source Row */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
             <GitBranch size={12} className="inline mr-1" />
             Branch
           </label>
@@ -80,7 +80,7 @@ export default function ScanForm({ onScanStarted }: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
             Repo Source
           </label>
           <select
@@ -95,10 +95,10 @@ export default function ScanForm({ onScanStarted }: Props) {
         </div>
       </div>
 
-      {/* Toggles */}
+      {/* Toggle switches */}
       <div className="flex gap-4">
-        <Toggle label="Static Analysis" icon={Shield} checked={staticAnalysis} onChange={setStaticAnalysis} />
-        <Toggle label="AI Tests" icon={Zap} checked={aiTests} onChange={setAiTests} />
+        <ToggleSwitch label="Static Analysis" icon={Shield} checked={staticAnalysis} onChange={setStaticAnalysis} />
+        <ToggleSwitch label="AI Tests" icon={Zap} checked={aiTests} onChange={setAiTests} />
       </div>
 
       {/* Error */}
@@ -109,7 +109,11 @@ export default function ScanForm({ onScanStarted }: Props) {
       )}
 
       {/* Submit */}
-      <button onClick={handleSubmit} disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
+      <button
+        onClick={handleSubmit}
+        disabled={loading}
+        className="btn-primary w-full h-11 flex items-center justify-center gap-2"
+      >
         {loading ? (
           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
         ) : (
@@ -121,7 +125,7 @@ export default function ScanForm({ onScanStarted }: Props) {
   );
 }
 
-function Toggle({
+function ToggleSwitch({
   label,
   icon: Icon,
   checked,
@@ -135,14 +139,27 @@ function Toggle({
   return (
     <button
       onClick={() => onChange(!checked)}
-      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all border ${
-        checked
-          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-          : "bg-white text-slate-400 border-slate-200"
-      }`}
+      className="flex items-center gap-3 group"
     >
-      <Icon size={14} />
-      {label}
+      {/* Switch track */}
+      <div
+        className={`relative w-10 h-[22px] rounded-full transition-colors duration-200 ${
+          checked ? "bg-emerald-500" : "bg-gray-200"
+        }`}
+      >
+        {/* Switch thumb */}
+        <div
+          className={`absolute top-[3px] w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${
+            checked ? "translate-x-[22px]" : "translate-x-[3px]"
+          }`}
+        />
+      </div>
+      <div className="flex items-center gap-1.5">
+        <Icon size={14} className={checked ? "text-emerald-600" : "text-gray-400"} />
+        <span className={`text-sm font-medium ${checked ? "text-gray-700" : "text-gray-400"}`}>
+          {label}
+        </span>
+      </div>
     </button>
   );
 }
