@@ -3,15 +3,69 @@ import type {
   ScanDetail,
   ScanSummary,
   ConnectorStatus,
+  ConnectorSchema,
+  AuthResponse,
+  User,
 } from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+// Module-level token storage (NOT localStorage)
+let accessToken: string | null = null;
+let refreshTokenValue: string | null = null;
+
+export function setTokens(access: string, refresh: string) {
+  accessToken = access;
+  refreshTokenValue = refresh;
+}
+
+export function getAccessToken() {
+  return accessToken;
+}
+
+export function clearTokens() {
+  accessToken = null;
+  refreshTokenValue = null;
+}
+
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options?.headers as Record<string, string>),
+  };
+
+  if (accessToken) {
+    headers["Authorization"] = `Bearer ${accessToken}`;
+  }
+
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
     ...options,
+    headers,
   });
+
+  // Handle 401 - try refresh
+  if (res.status === 401 && refreshTokenValue) {
+    const refreshed = await tryRefresh();
+    if (refreshed) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+      const retry = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers,
+      });
+      if (!retry.ok) {
+        const err = await retry.json().catch(() => ({ detail: "Request failed" }));
+        throw new Error(err.detail || `API error: ${retry.status}`);
+      }
+      return retry.json();
+    } else {
+      clearTokens();
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
+      throw new Error("Session expired");
+    }
+  }
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: "Request failed" }));
     throw new Error(err.detail || `API error: ${res.status}`);
@@ -19,7 +73,43 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+async function tryRefresh(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshTokenValue }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    accessToken = data.access_token;
+    if (data.refresh_token) {
+      refreshTokenValue = data.refresh_token;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const api = {
+  // Auth
+  login: (email: string, password: string) =>
+    apiFetch<AuthResponse>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
+
+  signup: (email: string, password: string, name: string, tenant_name: string) =>
+    apiFetch<AuthResponse>("/api/auth/signup", {
+      method: "POST",
+      body: JSON.stringify({ email, password, name, tenant_name }),
+    }),
+
+  getMe: () => apiFetch<{ user: User }>("/api/auth/me"),
+
+  refreshToken: () => tryRefresh(),
+
   // Scans
   triggerScan: (request: ScanRequest) =>
     apiFetch<{ scan_id: string; status: string; message: string }>(
@@ -44,6 +134,51 @@ export const api = {
     apiFetch<{ type: string; connected: boolean; message: string }>(
       `/api/connectors/${type}/test`,
       { method: "POST" }
+    ),
+
+  getConnectorSchema: () =>
+    apiFetch<{ schemas: ConnectorSchema[] }>("/api/connectors/schema"),
+
+  saveConnectorConfig: (type: string, credentials: Record<string, string>) =>
+    apiFetch<{ success: boolean; message: string }>(
+      `/api/connectors/${type}/config`,
+      { method: "POST", body: JSON.stringify(credentials) }
+    ),
+
+  // File bugs
+  fileBugs: (
+    scanId: string,
+    tracker_type: string,
+    credentials: Record<string, string>,
+    issue_ids: string[]
+  ) =>
+    apiFetch<{ filed: { issue_id: string; tracker: string; url: string }[]; errors: string[] }>(
+      `/api/scan/${scanId}/file-bugs`,
+      {
+        method: "POST",
+        body: JSON.stringify({ tracker_type, credentials, issue_ids }),
+      }
+    ),
+
+  fileBugsSaved: (scanId: string, tracker_type: string, issue_ids: string[]) =>
+    apiFetch<{ filed: { issue_id: string; tracker: string; url: string }[]; errors: string[] }>(
+      `/api/scan/${scanId}/file-bugs/saved`,
+      {
+        method: "POST",
+        body: JSON.stringify({ tracker_type, issue_ids }),
+      }
+    ),
+
+  // Team
+  listTeamMembers: () =>
+    apiFetch<{ members: { id: string; email: string; name: string; role: string; joined_at: string }[] }>(
+      "/api/team"
+    ),
+
+  inviteMember: (email: string, role: string) =>
+    apiFetch<{ success: boolean; message: string }>(
+      "/api/team/invite",
+      { method: "POST", body: JSON.stringify({ email, role }) }
     ),
 
   // WebSocket URL

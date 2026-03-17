@@ -24,8 +24,8 @@ export default function ScanPage() {
   return (
     <Shell>
       <div className="mb-8">
-        <h1 className="text-2xl font-display font-bold text-zinc-100">New Scan</h1>
-        <p className="text-sm text-zinc-500 mt-1">
+        <h1 className="text-2xl font-display font-bold text-slate-900">New Scan</h1>
+        <p className="text-sm text-slate-500 mt-1">
           Scan a repository for bugs, security issues, and generate AI tests
         </p>
       </div>
@@ -33,7 +33,7 @@ export default function ScanPage() {
       <div className="grid grid-cols-2 gap-8">
         {/* Form */}
         <div className="card p-6">
-          <h2 className="text-xs font-mono text-zinc-500 uppercase tracking-wider mb-6">
+          <h2 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-6">
             Scan Configuration
           </h2>
           <ScanForm onScanStarted={handleScanStarted} />
@@ -41,14 +41,14 @@ export default function ScanPage() {
 
         {/* Live Terminal */}
         <div>
-          <h2 className="text-xs font-mono text-zinc-500 uppercase tracking-wider mb-4">
+          <h2 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-4">
             Live Output
           </h2>
           <ScanTerminal messages={messages} />
 
           {scanId && (
-            <div className="mt-4 text-xs font-mono text-zinc-600">
-              Scan ID: <span className="text-zinc-400">{scanId}</span>
+            <div className="mt-4 text-xs font-mono text-slate-400">
+              Scan ID: <span className="text-slate-600">{scanId}</span>
             </div>
           )}
         </div>

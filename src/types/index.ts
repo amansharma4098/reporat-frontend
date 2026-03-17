@@ -11,14 +11,67 @@ export type ScanStatus =
   | "failed";
 export type Severity = "critical" | "high" | "medium" | "low" | "info";
 
+// Auth types
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface Tenant {
+  id: string;
+  name: string;
+  slug: string;
+  created_at: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  refresh_token: string;
+  user: User;
+  tenant: Tenant;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface SignupRequest {
+  email: string;
+  password: string;
+  name: string;
+  tenant_name: string;
+}
+
+// Connector schema
+export interface ConnectorSchemaField {
+  key: string;
+  label: string;
+  placeholder: string;
+  type: "text" | "password";
+}
+
+export interface ConnectorSchema {
+  type: string;
+  fields: ConnectorSchemaField[];
+}
+
+// File bugs
+export interface FileBugsRequest {
+  tracker_type: string;
+  credentials: Record<string, string>;
+  issue_ids: string[];
+}
+
 export interface ScanRequest {
   repo_url: string;
   branch: string;
   repo_source: RepoSource;
-  bug_tracker: BugTrackerType;
   run_static_analysis: boolean;
   run_ai_tests: boolean;
-  file_bugs: boolean;
   include_patterns: string[];
   exclude_patterns: string[];
 }
@@ -87,4 +140,12 @@ export interface WSMessage {
   tests_generated?: number;
   tests_passed?: number;
   tests_failed?: number;
+}
+
+export interface TeamMember {
+  id: string;
+  email: string;
+  name: string;
+  role: "owner" | "admin" | "member";
+  joined_at: string;
 }

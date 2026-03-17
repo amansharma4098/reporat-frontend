@@ -20,14 +20,14 @@ export default function ScansPage() {
   return (
     <Shell>
       <div className="mb-8">
-        <h1 className="text-2xl font-display font-bold text-zinc-100">Scan History</h1>
-        <p className="text-sm text-zinc-500 mt-1">All repository scans</p>
+        <h1 className="text-2xl font-display font-bold text-slate-900">Scan History</h1>
+        <p className="text-sm text-slate-500 mt-1">All repository scans</p>
       </div>
 
       {loading ? (
         <div className="card p-12 text-center">
-          <div className="animate-spin text-accent text-2xl mb-3">&#x25E0;</div>
-          <p className="text-zinc-500 text-sm font-mono">Loading...</p>
+          <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-slate-400 text-sm">Loading...</p>
         </div>
       ) : (
         <ScanList scans={scans} />

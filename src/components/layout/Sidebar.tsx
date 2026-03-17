@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
 import {
   ScanSearch,
   LayoutDashboard,
   Plug,
-  Settings,
   Bug,
+  Users,
+  LogOut,
 } from "lucide-react";
 
 const navItems = [
@@ -16,26 +18,30 @@ const navItems = [
   { href: "/scan", label: "New Scan", icon: ScanSearch },
   { href: "/scans", label: "Scan History", icon: Bug },
   { href: "/connectors", label: "Connectors", icon: Plug },
+  { href: "/team", label: "Team", icon: Users },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { user, tenant, logout } = useAuth();
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-64 bg-surface-1 border-r border-surface-4 flex flex-col z-50">
+    <aside className="fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-slate-200 flex flex-col z-50">
       {/* Logo */}
-      <div className="p-6 border-b border-surface-4">
+      <div className="p-6 border-b border-slate-200">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded-lg bg-accent/10 border border-accent/30 flex items-center justify-center group-hover:animate-pulse-glow transition-all">
-            <span className="text-accent font-mono font-bold text-sm">R</span>
+          <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+            <span className="text-emerald-600 font-mono font-bold text-sm">R</span>
           </div>
           <div>
-            <h1 className="font-display font-bold text-lg text-zinc-100 tracking-tight">
-              Repo<span className="text-accent">Rat</span>
+            <h1 className="font-display font-bold text-lg text-slate-900 tracking-tight">
+              Repo<span className="text-emerald-500">Rat</span>
             </h1>
-            <p className="text-[10px] font-mono text-zinc-600 -mt-0.5 tracking-widest uppercase">
-              AI Scanner
-            </p>
+            {tenant && (
+              <p className="text-[10px] text-slate-400 -mt-0.5 tracking-wide truncate max-w-[140px]">
+                {tenant.name}
+              </p>
+            )}
           </div>
         </Link>
       </div>
@@ -51,8 +57,8 @@ export default function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                 active
-                  ? "bg-accent/10 text-accent border border-accent/20"
-                  : "text-zinc-500 hover:text-zinc-300 hover:bg-surface-3 border border-transparent"
+                  ? "bg-emerald-50 text-emerald-700 border-l-2 border-emerald-500"
+                  : "text-slate-500 hover:text-slate-700 hover:bg-slate-50 border-l-2 border-transparent"
               )}
             >
               <Icon size={18} strokeWidth={active ? 2 : 1.5} />
@@ -62,12 +68,28 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-surface-4">
-        <div className="flex items-center gap-2 text-zinc-600 text-xs font-mono">
-          <div className="w-2 h-2 rounded-full bg-accent/60 animate-pulse" />
-          <span>v0.1.0</span>
-        </div>
+      {/* User footer */}
+      <div className="p-4 border-t border-slate-200">
+        {user && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                {user.name?.charAt(0)?.toUpperCase() || "U"}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-slate-700 truncate">{user.name}</p>
+                <p className="text-xs text-slate-400 truncate">{user.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={logout}
+              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+              title="Sign out"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );

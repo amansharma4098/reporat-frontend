@@ -5,11 +5,13 @@ import Shell from "@/components/layout/Shell";
 import StatCard from "@/components/ui/StatCard";
 import ScanList from "@/components/dashboard/ScanList";
 import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import type { ScanSummary } from "@/types";
 import { Bug, TestTube2, ScanSearch, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 export default function DashboardPage() {
+  const { user, tenant } = useAuth();
   const [scans, setScans] = useState<ScanSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,8 +32,12 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-display font-bold text-zinc-100">Dashboard</h1>
-          <p className="text-sm text-zinc-500 mt-1">Overview of all your repository scans</p>
+          <h1 className="text-2xl font-display font-bold text-slate-900">
+            Welcome back{user?.name ? `, ${user.name}` : ""}
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            {tenant ? `${tenant.name} — ` : ""}Overview of all your repository scans
+          </p>
         </div>
         <Link href="/scan" className="btn-primary flex items-center gap-2">
           <ScanSearch size={16} />
@@ -47,18 +53,18 @@ export default function DashboardPage() {
         <StatCard label="Bugs Filed" value={totalBugs} icon={ShieldCheck} />
       </div>
 
-      {/* Glow line */}
-      <div className="glow-line mb-8" />
+      {/* Divider */}
+      <div className="border-t border-slate-200 mb-8" />
 
       {/* Recent Scans */}
       <div className="mb-4">
-        <h2 className="text-sm font-mono text-zinc-500 uppercase tracking-wider">Recent Scans</h2>
+        <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wider">Recent Scans</h2>
       </div>
 
       {loading ? (
         <div className="card p-12 text-center">
-          <div className="animate-spin text-accent text-2xl mb-3">&#x25E0;</div>
-          <p className="text-zinc-500 text-sm font-mono">Loading scans...</p>
+          <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-slate-400 text-sm">Loading scans...</p>
         </div>
       ) : (
         <ScanList scans={scans.slice(0, 10)} />

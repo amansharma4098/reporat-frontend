@@ -2,20 +2,13 @@
 
 import { useState } from "react";
 import { api } from "@/lib/api";
-import type { RepoSource, BugTrackerType } from "@/types";
-import { ScanSearch, GitBranch, Zap, Shield, Bug } from "lucide-react";
+import type { RepoSource } from "@/types";
+import { ScanSearch, GitBranch, Zap, Shield } from "lucide-react";
 
 const repoSources: { value: RepoSource; label: string }[] = [
   { value: "github", label: "GitHub" },
   { value: "azure_devops", label: "Azure DevOps" },
   { value: "gitlab", label: "GitLab" },
-];
-
-const bugTrackers: { value: BugTrackerType; label: string }[] = [
-  { value: "github_issues", label: "GitHub Issues" },
-  { value: "jira", label: "Jira" },
-  { value: "azure_boards", label: "Azure Boards" },
-  { value: "linear", label: "Linear" },
 ];
 
 interface Props {
@@ -26,10 +19,8 @@ export default function ScanForm({ onScanStarted }: Props) {
   const [repoUrl, setRepoUrl] = useState("");
   const [branch, setBranch] = useState("main");
   const [repoSource, setRepoSource] = useState<RepoSource>("github");
-  const [bugTracker, setBugTracker] = useState<BugTrackerType>("github_issues");
   const [staticAnalysis, setStaticAnalysis] = useState(true);
   const [aiTests, setAiTests] = useState(true);
-  const [fileBugs, setFileBugs] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -45,10 +36,8 @@ export default function ScanForm({ onScanStarted }: Props) {
         repo_url: repoUrl.trim(),
         branch,
         repo_source: repoSource,
-        bug_tracker: bugTracker,
         run_static_analysis: staticAnalysis,
         run_ai_tests: aiTests,
-        file_bugs: fileBugs,
         include_patterns: ["*.py", "*.js", "*.ts"],
         exclude_patterns: ["node_modules", ".git", "__pycache__", "venv"],
       });
@@ -64,7 +53,7 @@ export default function ScanForm({ onScanStarted }: Props) {
     <div className="space-y-6">
       {/* Repo URL */}
       <div>
-        <label className="block text-xs font-mono text-zinc-500 uppercase tracking-wider mb-2">
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">
           Repository URL
         </label>
         <input
@@ -79,7 +68,7 @@ export default function ScanForm({ onScanStarted }: Props) {
       {/* Branch + Source Row */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-mono text-zinc-500 uppercase tracking-wider mb-2">
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">
             <GitBranch size={12} className="inline mr-1" />
             Branch
           </label>
@@ -91,7 +80,7 @@ export default function ScanForm({ onScanStarted }: Props) {
           />
         </div>
         <div>
-          <label className="block text-xs font-mono text-zinc-500 uppercase tracking-wider mb-2">
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">
             Repo Source
           </label>
           <select
@@ -106,33 +95,15 @@ export default function ScanForm({ onScanStarted }: Props) {
         </div>
       </div>
 
-      {/* Bug Tracker */}
-      <div>
-        <label className="block text-xs font-mono text-zinc-500 uppercase tracking-wider mb-2">
-          <Bug size={12} className="inline mr-1" />
-          Bug Tracker
-        </label>
-        <select
-          value={bugTracker}
-          onChange={(e) => setBugTracker(e.target.value as BugTrackerType)}
-          className="input-field w-full"
-        >
-          {bugTrackers.map((t) => (
-            <option key={t.value} value={t.value}>{t.label}</option>
-          ))}
-        </select>
-      </div>
-
       {/* Toggles */}
-      <div className="flex gap-6">
+      <div className="flex gap-4">
         <Toggle label="Static Analysis" icon={Shield} checked={staticAnalysis} onChange={setStaticAnalysis} />
         <Toggle label="AI Tests" icon={Zap} checked={aiTests} onChange={setAiTests} />
-        <Toggle label="File Bugs" icon={Bug} checked={fileBugs} onChange={setFileBugs} />
       </div>
 
       {/* Error */}
       {error && (
-        <div className="text-red-400 text-sm font-mono bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-2">
+        <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-2">
           {error}
         </div>
       )}
@@ -140,7 +111,7 @@ export default function ScanForm({ onScanStarted }: Props) {
       {/* Submit */}
       <button onClick={handleSubmit} disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
         {loading ? (
-          <span className="animate-spin">&#x25E0;</span>
+          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
         ) : (
           <ScanSearch size={16} />
         )}
@@ -164,10 +135,10 @@ function Toggle({
   return (
     <button
       onClick={() => onChange(!checked)}
-      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-mono transition-all border ${
+      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all border ${
         checked
-          ? "bg-accent/10 text-accent border-accent/30"
-          : "bg-surface-3 text-zinc-500 border-surface-4"
+          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+          : "bg-white text-slate-400 border-slate-200"
       }`}
     >
       <Icon size={14} />
