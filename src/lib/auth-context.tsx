@@ -8,7 +8,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { api, setTokens, clearTokens } from "@/lib/api";
+import { api, setTokens, clearTokens, getAccessToken } from "@/lib/api";
 import type { User, Tenant } from "@/types";
 
 interface AuthContextValue {
@@ -56,17 +56,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // On mount, try to refresh token
+  // On mount, restore session from cookies
   useEffect(() => {
-    api
-      .refreshToken()
-      .then((ok) => {
-        if (ok) {
-          return api.getMe().then((res) => setUser(res.user));
+    const restore = async () => {
+      try {
+        // 1. Check for existing access token cookie
+        const token = getAccessToken();
+        if (!token) {
+          // No access token — try refresh
+          const refreshed = await api.refreshToken();
+          if (!refreshed) {
+            // No valid session at all
+            return;
+          }
         }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+
+        // 2. Fetch current user with the (possibly refreshed) token
+        const res = await api.getMe();
+        setUser(res.user);
+        if (res.tenant) {
+          setTenant(res.tenant);
+        }
+      } catch {
+        // Access token invalid — try refresh once
+        try {
+          const refreshed = await api.refreshToken();
+          if (refreshed) {
+            const res = await api.getMe();
+            setUser(res.user);
+            if (res.tenant) {
+              setTenant(res.tenant);
+            }
+          } else {
+            clearTokens();
+          }
+        } catch {
+          clearTokens();
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    restore();
   }, []);
 
   return (

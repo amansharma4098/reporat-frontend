@@ -10,23 +10,62 @@ import type {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://reporat-backend-production.up.railway.app";
 
-// Module-level token storage (NOT localStorage)
+// ---------------------------------------------------------------------------
+// Cookie helpers
+// ---------------------------------------------------------------------------
+
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+  return match ? match[2] : null;
+}
+
+function setCookie(name: string, value: string, maxAge: number) {
+  if (typeof document === "undefined") return;
+  document.cookie = `${name}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
+}
+
+function deleteCookie(name: string) {
+  if (typeof document === "undefined") return;
+  document.cookie = `${name}=; path=/; max-age=0`;
+}
+
+// ---------------------------------------------------------------------------
+// Token management — memory cache backed by cookies
+// ---------------------------------------------------------------------------
+
 let accessToken: string | null = null;
 let refreshTokenValue: string | null = null;
+
+export function getAccessToken(): string | null {
+  if (accessToken) return accessToken;
+  accessToken = getCookie("reporat_access_token");
+  return accessToken;
+}
+
+function getRefreshToken(): string | null {
+  if (refreshTokenValue) return refreshTokenValue;
+  refreshTokenValue = getCookie("reporat_refresh_token");
+  return refreshTokenValue;
+}
 
 export function setTokens(access: string, refresh: string) {
   accessToken = access;
   refreshTokenValue = refresh;
-}
-
-export function getAccessToken() {
-  return accessToken;
+  setCookie("reporat_access_token", access, 1800); // 30 min
+  setCookie("reporat_refresh_token", refresh, 604800); // 7 days
 }
 
 export function clearTokens() {
   accessToken = null;
   refreshTokenValue = null;
+  deleteCookie("reporat_access_token");
+  deleteCookie("reporat_refresh_token");
 }
+
+// ---------------------------------------------------------------------------
+// Fetch wrapper
+// ---------------------------------------------------------------------------
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
@@ -34,8 +73,9 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
     ...(options?.headers as Record<string, string>),
   };
 
-  if (accessToken) {
-    headers["Authorization"] = `Bearer ${accessToken}`;
+  const token = getAccessToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   const res = await fetch(`${API_BASE}${path}`, {
@@ -43,8 +83,8 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
     headers,
   });
 
-  // Handle 401 - try refresh
-  if (res.status === 401 && refreshTokenValue) {
+  // Handle 401 — try refresh
+  if (res.status === 401 && getRefreshToken()) {
     const refreshed = await tryRefresh();
     if (refreshed) {
       headers["Authorization"] = `Bearer ${accessToken}`;
@@ -74,23 +114,26 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 async function tryRefresh(): Promise<boolean> {
+  const rt = getRefreshToken();
+  if (!rt) return false;
   try {
     const res = await fetch(`${API_BASE}/api/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token: refreshTokenValue }),
+      body: JSON.stringify({ refresh_token: rt }),
     });
     if (!res.ok) return false;
     const data = await res.json();
-    accessToken = data.access_token;
-    if (data.refresh_token) {
-      refreshTokenValue = data.refresh_token;
-    }
+    setTokens(data.access_token, data.refresh_token ?? rt);
     return true;
   } catch {
     return false;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
 
 export const api = {
   // Auth
@@ -106,7 +149,7 @@ export const api = {
       body: JSON.stringify({ email, password, name, tenant_name }),
     }),
 
-  getMe: () => apiFetch<{ user: User }>("/api/auth/me"),
+  getMe: () => apiFetch<{ user: User; tenant?: import("@/types").Tenant }>("/api/auth/me"),
 
   refreshToken: () => tryRefresh(),
 
