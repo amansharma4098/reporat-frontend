@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap");
+
+:root {
+  --accent: #39ff14;
+  --accent-dim: rgba(57, 255, 20, 0.15);
+  --surface-0: #09090b;
+  --surface-1: #0f0f12;
+  --surface-2: #18181b;
+  --surface-3: #1e1e22;
+  --surface-4: #27272a;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
+}
+
+body {
+  background: var(--surface-0);
+  color: #e4e4e7;
+  font-family: "DM Sans", sans-serif;
+}
+
+::selection {
+  background: rgba(57, 255, 20, 0.3);
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-4);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #39ff14;
+}
+
+@layer components {
+  .card {
+    @apply bg-surface-2 border border-surface-4 rounded-lg;
+  }
+
+  .card-hover {
+    @apply card transition-all duration-200 hover:border-accent/30 hover:shadow-[0_0_15px_rgba(57,255,20,0.08)];
+  }
+
+  .btn-primary {
+    @apply bg-accent text-surface-0 font-semibold px-6 py-2.5 rounded-lg
+           hover:bg-accent/90 transition-all duration-200
+           hover:shadow-[0_0_20px_rgba(57,255,20,0.3)]
+           active:scale-[0.98] font-mono text-sm;
+  }
+
+  .btn-secondary {
+    @apply border border-surface-4 text-zinc-300 px-6 py-2.5 rounded-lg
+           hover:border-accent/40 hover:text-accent transition-all duration-200
+           active:scale-[0.98] font-mono text-sm;
+  }
+
+  .input-field {
+    @apply bg-surface-1 border border-surface-4 rounded-lg px-4 py-2.5
+           text-zinc-200 placeholder-zinc-600 font-mono text-sm
+           focus:outline-none focus:border-accent/50 focus:shadow-[0_0_10px_rgba(57,255,20,0.1)]
+           transition-all duration-200;
+  }
+
+  .badge-critical {
+    @apply bg-red-500/15 text-red-400 border border-red-500/30 px-2 py-0.5 rounded text-xs font-mono;
+  }
+
+  .badge-high {
+    @apply bg-orange-500/15 text-orange-400 border border-orange-500/30 px-2 py-0.5 rounded text-xs font-mono;
+  }
+
+  .badge-medium {
+    @apply bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded text-xs font-mono;
+  }
+
+  .badge-low {
+    @apply bg-blue-500/15 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded text-xs font-mono;
+  }
+
+  .badge-info {
+    @apply bg-zinc-500/15 text-zinc-400 border border-zinc-500/30 px-2 py-0.5 rounded text-xs font-mono;
+  }
+
+  .glow-line {
+    @apply h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent;
+  }
+}
