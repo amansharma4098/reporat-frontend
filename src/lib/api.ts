@@ -8,7 +8,11 @@ import type {
   User,
 } from "@/types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (typeof window !== "undefined" && window.location.hostname !== "localhost"
+    ? "https://reporat-backend-production.up.railway.app"
+    : "http://localhost:8000");
 
 // Module-level token storage (NOT localStorage)
 let accessToken: string | null = null;
