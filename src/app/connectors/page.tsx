@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Shell from "@/components/layout/Shell";
 import { api } from "@/lib/api";
-import type { ConnectorStatus, ConnectorSchema } from "@/types";
+import type { ConnectorStatus } from "@/types";
 import {
   Plug,
   CheckCircle2,
@@ -22,34 +22,71 @@ const trackerMeta: Record<string, { label: string; color: string; docs: string }
   linear: { label: "Linear", color: "#5E6AD2", docs: "https://linear.app/docs/api" },
 };
 
+const TRACKER_FIELDS: Record<string, { key: string; label: string; type: string; placeholder: string }[]> = {
+  jira: [
+    { key: "url", label: "Jira URL", type: "text", placeholder: "https://your-domain.atlassian.net" },
+    { key: "email", label: "Email", type: "text", placeholder: "you@example.com" },
+    { key: "api_token", label: "API Token", type: "password", placeholder: "Your Jira API token" },
+    { key: "project_key", label: "Project Key", type: "text", placeholder: "PROJ" },
+  ],
+  azure_boards: [
+    { key: "org", label: "Organization", type: "text", placeholder: "your-org" },
+    { key: "project", label: "Project", type: "text", placeholder: "your-project" },
+    { key: "pat", label: "Personal Access Token", type: "password", placeholder: "Your Azure PAT" },
+  ],
+  github_issues: [
+    { key: "pat", label: "Personal Access Token", type: "password", placeholder: "ghp_xxxx" },
+    { key: "repo", label: "Repository", type: "text", placeholder: "owner/repo" },
+  ],
+  linear: [
+    { key: "api_key", label: "API Key", type: "password", placeholder: "lin_api_xxxx" },
+    { key: "team_id", label: "Team ID", type: "text", placeholder: "Team ID" },
+  ],
+};
+
+const ALL_TRACKER_TYPES = Object.keys(trackerMeta);
+
 export default function ConnectorsPage() {
   const [connectors, setConnectors] = useState<ConnectorStatus[]>([]);
-  const [schemas, setSchemas] = useState<ConnectorSchema[]>([]);
   const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [credentials, setCredentials] = useState<Record<string, Record<string, string>>>({});
   const [saving, setSaving] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  const fetchData = () => {
+  const fetchData = async () => {
     setLoading(true);
-    Promise.all([
-      api.listConnectors().then((res) => setConnectors(res.connectors)).catch(() => {}),
-      api.getConnectorSchema().then((res) => setSchemas(res.schemas)).catch(() => {}),
-    ]).finally(() => setLoading(false));
+    try {
+      const res = await api.listConnectors();
+      setConnectors(res?.connectors ?? []);
+    } catch {
+      // If API fails, show all trackers as not configured
+      setConnectors(ALL_TRACKER_TYPES.map((type) => ({ type: type as any, connected: false })));
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  // Ensure all tracker types are shown even if the API only returns some
+  const displayConnectors: ConnectorStatus[] = ALL_TRACKER_TYPES.map((type) => {
+    const existing = connectors.find((c) => c.type === type);
+    return existing ?? { type: type as any, connected: false };
+  });
 
   const testConnector = async (type: string) => {
     setTesting(type);
     try {
       const result = await api.testConnector(type);
       setConnectors((prev) =>
-        prev.map((c) => (c.type === type ? { ...c, connected: result.connected } : c))
+        prev.map((c) => (c.type === type ? { ...c, connected: result?.connected ?? false } : c))
       );
-    } catch {}
+    } catch {
+      // silently fail
+    }
     setTesting(null);
   };
 
@@ -58,11 +95,15 @@ export default function ConnectorsPage() {
     if (!creds) return;
     setSaving(type);
     setSaveSuccess(null);
+    setSaveError(null);
     try {
       await api.saveConnectorConfig(type, creds);
       setSaveSuccess(type);
       setTimeout(() => setSaveSuccess(null), 3000);
-    } catch {}
+    } catch (err: any) {
+      setSaveError(type);
+      setTimeout(() => setSaveError(null), 5000);
+    }
     setSaving(null);
   };
 
@@ -92,9 +133,9 @@ export default function ConnectorsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4">
-          {connectors.map((c) => {
-            const meta = trackerMeta[c.type] || { label: c.type, color: "#888", docs: "#" };
-            const schema = schemas.find((s) => s.type === c.type);
+          {displayConnectors.map((c) => {
+            const meta = trackerMeta[c.type] ?? { label: c.type, color: "#888", docs: "#" };
+            const fields = TRACKER_FIELDS[c.type] ?? [];
             const isExpanded = expanded === c.type;
 
             return (
@@ -160,10 +201,10 @@ export default function ConnectorsPage() {
                   </div>
                 </div>
 
-                {/* Expanded config */}
-                {isExpanded && schema && (
+                {/* Expanded config — uses hardcoded fields, no schema API dependency */}
+                {isExpanded && fields.length > 0 && (
                   <div className="border-t border-slate-200 p-6 space-y-4 bg-slate-50/50 rounded-b-xl">
-                    {schema.fields.map((field) => (
+                    {fields.map((field) => (
                       <div key={field.key}>
                         <label className="block text-xs font-medium text-slate-600 mb-1">
                           {field.label}
@@ -194,6 +235,11 @@ export default function ConnectorsPage() {
                       {saveSuccess === c.type && (
                         <span className="text-xs text-emerald-600 flex items-center gap-1">
                           <CheckCircle2 size={12} /> Saved
+                        </span>
+                      )}
+                      {saveError === c.type && (
+                        <span className="text-xs text-red-500 flex items-center gap-1">
+                          <XCircle size={12} /> Failed to save
                         </span>
                       )}
                     </div>

@@ -8,7 +8,7 @@ import StatusIndicator from "@/components/ui/StatusIndicator";
 import IssuesTable from "@/components/dashboard/IssuesTable";
 import { api } from "@/lib/api";
 import { repoName, formatDate } from "@/lib/utils";
-import type { ScanDetail, ConnectorSchema } from "@/types";
+import type { ScanDetail } from "@/types";
 import {
   Bug,
   TestTube2,
@@ -28,6 +28,28 @@ const trackerLogos: Record<string, { label: string; color: string; icon: string 
   linear: { label: "Linear", color: "#5E6AD2", icon: "L" },
 };
 
+const TRACKER_FIELDS: Record<string, { key: string; label: string; type: string; placeholder: string }[]> = {
+  jira: [
+    { key: "url", label: "Jira URL", type: "text", placeholder: "https://your-domain.atlassian.net" },
+    { key: "email", label: "Email", type: "text", placeholder: "you@example.com" },
+    { key: "api_token", label: "API Token", type: "password", placeholder: "Your Jira API token" },
+    { key: "project_key", label: "Project Key", type: "text", placeholder: "PROJ" },
+  ],
+  azure_boards: [
+    { key: "org", label: "Organization", type: "text", placeholder: "your-org" },
+    { key: "project", label: "Project", type: "text", placeholder: "your-project" },
+    { key: "pat", label: "Personal Access Token", type: "password", placeholder: "Your Azure PAT" },
+  ],
+  github_issues: [
+    { key: "pat", label: "Personal Access Token", type: "password", placeholder: "ghp_xxxx" },
+    { key: "repo", label: "Repository", type: "text", placeholder: "owner/repo" },
+  ],
+  linear: [
+    { key: "api_key", label: "API Key", type: "password", placeholder: "lin_api_xxxx" },
+    { key: "team_id", label: "Team ID", type: "text", placeholder: "Team ID" },
+  ],
+};
+
 export default function ScanDetailPage() {
   const params = useParams();
   const scanId = params.id as string;
@@ -39,7 +61,6 @@ export default function ScanDetailPage() {
   // File bugs modal state
   const [showFileBugs, setShowFileBugs] = useState(false);
   const [selectedTracker, setSelectedTracker] = useState<string | null>(null);
-  const [schemas, setSchemas] = useState<ConnectorSchema[]>([]);
   const [credentials, setCredentials] = useState<Record<string, string>>({});
   const [useSaved, setUseSaved] = useState(false);
   const [selectedIssues, setSelectedIssues] = useState<Set<string>>(new Set());
@@ -73,7 +94,7 @@ export default function ScanDetailPage() {
           }
         })
         .catch(() => {
-          // Silently ignore polling errors — the initial fetch already set state
+          // Silently ignore polling errors
         });
     }, 3000);
     return () => clearInterval(interval);
@@ -87,19 +108,13 @@ export default function ScanDetailPage() {
     }
   }, [scan?.issues]);
 
-  const openFileBugs = useCallback(async () => {
+  const openFileBugs = useCallback(() => {
     setShowFileBugs(true);
     setSelectedTracker(null);
     setCredentials({});
     setUseSaved(false);
     setFiledResults([]);
     setFilingError("");
-    try {
-      const res = await api.getConnectorSchema();
-      setSchemas(res?.schemas ?? []);
-    } catch {
-      setSchemas([]);
-    }
   }, []);
 
   const handleFileBugs = async () => {
@@ -110,7 +125,6 @@ export default function ScanDetailPage() {
 
     try {
       const issueIds = Array.from(selectedIssues);
-      // Simulate progress
       const progressInterval = setInterval(() => {
         setFilingProgress((prev) => Math.min(prev + 1, issueIds.length - 1));
       }, 500);
@@ -144,7 +158,7 @@ export default function ScanDetailPage() {
     });
   };
 
-  const currentSchema = schemas.find((s) => s.type === selectedTracker);
+  const trackerFields = selectedTracker ? (TRACKER_FIELDS[selectedTracker] ?? []) : [];
 
   if (error && !scan) {
     return (
@@ -324,7 +338,7 @@ export default function ScanDetailPage() {
       {/* File Bugs Modal */}
       {showFileBugs && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-2xl max-h-[85vh] overflow-y-auto m-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto m-4">
             {/* Modal header */}
             <div className="flex items-center justify-between p-6 border-b border-slate-200">
               <h2 className="text-lg font-display font-bold text-slate-900">File Bugs</h2>
@@ -409,7 +423,7 @@ export default function ScanDetailPage() {
                   </div>
 
                   {/* Step 2: Credentials */}
-                  {selectedTracker && currentSchema && (
+                  {selectedTracker && trackerFields.length > 0 && (
                     <div>
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="text-sm font-medium text-slate-700">Credentials</h3>
@@ -425,7 +439,7 @@ export default function ScanDetailPage() {
                       </div>
                       {!useSaved && (
                         <div className="space-y-3">
-                          {(currentSchema.fields ?? []).map((field) => (
+                          {trackerFields.map((field) => (
                             <div key={field.key}>
                               <label className="block text-xs font-medium text-slate-600 mb-1">
                                 {field.label}

@@ -7,58 +7,42 @@ import type {
   AuthResponse,
   User,
 } from "@/types";
+import { getCookie, setCookie, deleteCookie } from "@/lib/cookies";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://reporat-backend-production.up.railway.app";
-
-// ---------------------------------------------------------------------------
-// Cookie helpers
-// ---------------------------------------------------------------------------
-
-function getCookie(name: string): string | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-  return match ? match[2] : null;
-}
-
-function setCookie(name: string, value: string, maxAge: number) {
-  if (typeof document === "undefined") return;
-  document.cookie = `${name}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
-}
-
-function deleteCookie(name: string) {
-  if (typeof document === "undefined") return;
-  document.cookie = `${name}=; path=/; max-age=0`;
-}
 
 // ---------------------------------------------------------------------------
 // Token management — memory cache backed by cookies
 // ---------------------------------------------------------------------------
 
-let accessToken: string | null = null;
-let refreshTokenValue: string | null = null;
+let _memoryToken: string | null = null;
+let _memoryRefresh: string | null = null;
 
 export function getAccessToken(): string | null {
-  if (accessToken) return accessToken;
-  accessToken = getCookie("reporat_access_token");
-  return accessToken;
+  if (_memoryToken) return _memoryToken;
+  _memoryToken = getCookie("reporat_token");
+  return _memoryToken;
 }
 
 function getRefreshToken(): string | null {
-  if (refreshTokenValue) return refreshTokenValue;
-  refreshTokenValue = getCookie("reporat_refresh_token");
-  return refreshTokenValue;
+  if (_memoryRefresh) return _memoryRefresh;
+  _memoryRefresh = getCookie("reporat_refresh");
+  return _memoryRefresh;
 }
 
 export function setTokens(access: string, refresh: string) {
-  accessToken = access;
-  refreshTokenValue = refresh;
-  setCookie("reporat_access_token", access, 1800); // 30 min
-  setCookie("reporat_refresh_token", refresh, 604800); // 7 days
+  _memoryToken = access;
+  _memoryRefresh = refresh;
+  setCookie("reporat_token", access, 1800); // 30 min
+  setCookie("reporat_refresh", refresh, 604800); // 7 days
 }
 
 export function clearTokens() {
-  accessToken = null;
-  refreshTokenValue = null;
+  _memoryToken = null;
+  _memoryRefresh = null;
+  deleteCookie("reporat_token");
+  deleteCookie("reporat_refresh");
+  // Also clear old cookie names from previous version
   deleteCookie("reporat_access_token");
   deleteCookie("reporat_refresh_token");
 }
@@ -87,7 +71,7 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   if (res.status === 401 && getRefreshToken()) {
     const refreshed = await tryRefresh();
     if (refreshed) {
-      headers["Authorization"] = `Bearer ${accessToken}`;
+      headers["Authorization"] = `Bearer ${_memoryToken}`;
       const retry = await fetch(`${API_BASE}${path}`, {
         ...options,
         headers,
