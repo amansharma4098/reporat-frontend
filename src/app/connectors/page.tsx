@@ -9,17 +9,17 @@ import {
   CheckCircle2,
   XCircle,
   RefreshCw,
-  ExternalLink,
+
   ChevronDown,
   ChevronUp,
   Save,
 } from "lucide-react";
 
-const trackerMeta: Record<string, { label: string; color: string; docs: string }> = {
-  jira: { label: "Jira Cloud", color: "#2684FF", docs: "https://support.atlassian.com/jira-cloud-administration/docs/manage-api-tokens-for-your-atlassian-account/" },
-  azure_boards: { label: "Azure DevOps Boards", color: "#0078D4", docs: "https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate" },
-  github_issues: { label: "GitHub Issues", color: "#238636", docs: "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token" },
-  linear: { label: "Linear", color: "#5E6AD2", docs: "https://linear.app/docs/api" },
+const trackerMeta: Record<string, { label: string; color: string }> = {
+  jira: { label: "Jira Cloud", color: "#2684FF" },
+  azure_boards: { label: "Azure DevOps Boards", color: "#0078D4" },
+  github_issues: { label: "GitHub Issues", color: "#238636" },
+  linear: { label: "Linear", color: "#5E6AD2" },
 };
 
 const TRACKER_FIELDS: Record<string, { key: string; label: string; type: string; placeholder: string }[]> = {
@@ -134,7 +134,7 @@ export default function ConnectorsPage() {
       ) : (
         <div className="grid grid-cols-2 gap-4">
           {displayConnectors.map((c) => {
-            const meta = trackerMeta[c.type] ?? { label: c.type, color: "#888", docs: "#" };
+            const meta = trackerMeta[c.type] ?? { label: c.type, color: "#888" };
             const fields = TRACKER_FIELDS[c.type] ?? [];
             const isExpanded = expanded === c.type;
 
@@ -190,14 +190,6 @@ export default function ConnectorsPage() {
                       {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
                       Configure
                     </button>
-                    <a
-                      href={meta.docs}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-slate-400 hover:text-emerald-600 flex items-center gap-1 transition-colors ml-auto"
-                    >
-                      Docs <ExternalLink size={10} />
-                    </a>
                   </div>
                 </div>
 
