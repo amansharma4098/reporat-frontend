@@ -9,6 +9,7 @@ import {
   ScanSearch,
   Bug,
   Plug,
+  Settings,
   Users,
   LogOut,
 } from "lucide-react";
@@ -21,6 +22,7 @@ const mainNav = [
 
 const settingsNav = [
   { href: "/connectors", label: "Connectors", icon: Plug },
+  { href: "/settings", label: "Settings", icon: Settings },
   { href: "/team", label: "Team", icon: Users },
 ];
 

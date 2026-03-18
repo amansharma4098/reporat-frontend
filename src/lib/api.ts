@@ -220,6 +220,62 @@ export const api = {
       { method: "POST", body: JSON.stringify({ email, role }) }
     ),
 
+  // Scan diff
+  getScanDiff: (scanId: string) =>
+    apiFetch<any>(`/api/scan/${scanId}/diff`),
+
+  // PDF export
+  getScanReport: (scanId: string) =>
+    `${API_BASE}/api/scan/${scanId}/report`,
+
+  // Webhooks
+  getWebhookConfigs: () =>
+    apiFetch<any>("/api/webhooks/config"),
+
+  createWebhookConfig: (data: { source: string; auto_scan: boolean }) =>
+    apiFetch<any>("/api/webhooks/config", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  deleteWebhookConfig: (id: string) =>
+    apiFetch<any>(`/api/webhooks/config/${id}`, { method: "DELETE" }),
+
+  // Notifications
+  getNotificationConfigs: () =>
+    apiFetch<any>("/api/notifications/config"),
+
+  createNotificationConfig: (data: { type: string; webhook_url: string; notify_on: string }) =>
+    apiFetch<any>("/api/notifications/config", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  testNotification: (id: string) =>
+    apiFetch<any>("/api/notifications/test", {
+      method: "POST",
+      body: JSON.stringify({ id }),
+    }),
+
+  deleteNotificationConfig: (id: string) =>
+    apiFetch<any>(`/api/notifications/config/${id}`, { method: "DELETE" }),
+
+  // Schedules
+  getSchedules: () =>
+    apiFetch<any>("/api/schedules"),
+
+  createSchedule: (data: any) =>
+    apiFetch<any>("/api/schedules", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  deleteSchedule: (id: string) =>
+    apiFetch<any>(`/api/schedules/${id}`, { method: "DELETE" }),
+
+  toggleSchedule: (id: string) =>
+    apiFetch<any>(`/api/schedules/${id}`, { method: "PATCH" }),
+
   // WebSocket URL
   getWSUrl: (scanId: string) => {
     const wsBase = API_BASE.replace("http", "ws");

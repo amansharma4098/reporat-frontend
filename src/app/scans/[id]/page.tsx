@@ -13,6 +13,7 @@ import {
   ExternalLink,
   X,
   Trash2,
+  Download,
 } from "lucide-react";
 
 const trackerLogos: Record<string, { label: string; icon: string }> = {
@@ -44,6 +45,15 @@ const TRACKER_FIELDS: Record<string, { key: string; label: string; type: string;
   ],
 };
 
+// Severity dot color for diff view
+const sevDot: Record<string, string> = {
+  critical: "bg-red-500",
+  high: "bg-red-400",
+  medium: "bg-amber-400",
+  low: "bg-zinc-400",
+  info: "bg-zinc-300",
+};
+
 export default function ScanDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -51,7 +61,12 @@ export default function ScanDetailPage() {
   const [scan, setScan] = useState<ScanDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"issues" | "tests" | "bugs">("issues");
+  const [activeTab, setActiveTab] = useState<"issues" | "tests" | "bugs" | "diff">("issues");
+
+  // Diff state
+  const [diff, setDiff] = useState<any>(null);
+  const [diffLoading, setDiffLoading] = useState(false);
+  const [diffError, setDiffError] = useState("");
 
   // File bugs modal state
   const [showFileBugs, setShowFileBugs] = useState(false);
@@ -92,6 +107,16 @@ export default function ScanDetailPage() {
     }, 3000);
     return () => clearInterval(interval);
   }, [scanId]);
+
+  // Fetch diff when switching to diff tab
+  useEffect(() => {
+    if (activeTab !== "diff" || diff || diffLoading) return;
+    setDiffLoading(true);
+    api.getScanDiff(scanId)
+      .then((res) => setDiff(res))
+      .catch((err: any) => setDiffError(err?.message || "Failed to load diff"))
+      .finally(() => setDiffLoading(false));
+  }, [activeTab, scanId, diff, diffLoading]);
 
   useEffect(() => {
     const issues = scan?.issues ?? [];
@@ -164,6 +189,10 @@ export default function ScanDetailPage() {
     }
   };
 
+  const handleExportPdf = () => {
+    window.open(api.getScanReport(scanId), "_blank");
+  };
+
   const trackerFields = selectedTracker ? (TRACKER_FIELDS[selectedTracker] ?? []) : [];
 
   if (error && !scan) {
@@ -199,7 +228,11 @@ export default function ScanDetailPage() {
     { key: "issues" as const, label: "Issues" },
     { key: "tests" as const, label: "Tests" },
     { key: "bugs" as const, label: "Bugs" },
+    { key: "diff" as const, label: "Diff" },
   ];
+
+  const newIssues = diff?.new_issues ?? [];
+  const fixedIssues = diff?.fixed_issues ?? [];
 
   return (
     <Shell>
@@ -232,6 +265,15 @@ export default function ScanDetailPage() {
             )}
             Delete
           </button>
+          {status === "completed" && (
+            <button
+              onClick={handleExportPdf}
+              className="btn-secondary flex items-center gap-1.5"
+            >
+              <Download size={13} strokeWidth={1.5} />
+              Export PDF
+            </button>
+          )}
           {status === "completed" && issues.length > 0 && (
             <button onClick={openFileBugs} className="btn-primary">
               File Bugs
@@ -338,6 +380,66 @@ export default function ScanDetailPage() {
                 )}
               </div>
             ))
+          )}
+        </div>
+      )}
+
+      {/* Diff tab */}
+      {activeTab === "diff" && (
+        <div>
+          {diffLoading ? (
+            <div className="py-8 text-center">
+              <div className="w-4 h-4 border-2 border-zinc-300 border-t-zinc-900 rounded-full animate-spin mx-auto mb-2" />
+              <p className="text-12 text-zinc-400">Loading diff...</p>
+            </div>
+          ) : diffError ? (
+            <p className="py-8 text-center text-12 text-zinc-400">{diffError}</p>
+          ) : diff?.first_scan ? (
+            <p className="py-8 text-center text-12 text-zinc-400">First scan — nothing to compare</p>
+          ) : (
+            <div className="space-y-6">
+              {/* New issues */}
+              <div>
+                <h3 className="text-12 font-medium text-zinc-700 mb-2">
+                  New issues ({newIssues.length})
+                </h3>
+                {newIssues.length === 0 ? (
+                  <p className="text-12 text-zinc-400 py-3">No new issues</p>
+                ) : (
+                  <div>
+                    {newIssues.map((issue: any, i: number) => (
+                      <div key={issue?.id ?? i} className="flex items-center gap-3 px-3 py-2 border-b border-red-100 bg-red-50/40 hover:bg-red-50/70 transition-colors">
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${sevDot[issue?.severity] ?? "bg-zinc-300"}`} />
+                        <span className="text-11 font-mono text-zinc-500 truncate max-w-[180px]">{issue?.file_path}</span>
+                        <span className="text-13 text-zinc-700 truncate flex-1">{issue?.title}</span>
+                        <span className="text-[10px] font-medium text-red-600 bg-red-100 px-1.5 py-0.5 rounded flex-shrink-0">NEW</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Fixed issues */}
+              <div>
+                <h3 className="text-12 font-medium text-zinc-700 mb-2">
+                  Fixed issues ({fixedIssues.length})
+                </h3>
+                {fixedIssues.length === 0 ? (
+                  <p className="text-12 text-zinc-400 py-3">No fixed issues</p>
+                ) : (
+                  <div>
+                    {fixedIssues.map((issue: any, i: number) => (
+                      <div key={issue?.id ?? i} className="flex items-center gap-3 px-3 py-2 border-b border-emerald-100 bg-emerald-50/40 hover:bg-emerald-50/70 transition-colors">
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${sevDot[issue?.severity] ?? "bg-zinc-300"}`} />
+                        <span className="text-11 font-mono text-zinc-500 truncate max-w-[180px]">{issue?.file_path}</span>
+                        <span className="text-13 text-zinc-700 truncate flex-1">{issue?.title}</span>
+                        <span className="text-[10px] font-medium text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded flex-shrink-0">FIXED</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </div>
       )}
