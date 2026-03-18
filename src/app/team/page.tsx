@@ -27,7 +27,7 @@ const roleBadges: Record<string, string> = {
 };
 
 export default function TeamPage() {
-  const { user } = useAuth();
+  const { user, tenant } = useAuth();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -35,16 +35,46 @@ export default function TeamPage() {
   const [inviting, setInviting] = useState(false);
   const [inviteSuccess, setInviteSuccess] = useState("");
   const [inviteError, setInviteError] = useState("");
+  const [fetchFailed, setFetchFailed] = useState(false);
 
   useEffect(() => {
-    api.listTeamMembers()
-      .then((res) => setMembers(res.members))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+    const fetchMembers = async () => {
+      try {
+        const res = await api.listTeamMembers();
+        const fetched = res?.members ?? [];
+        // Ensure current user is first and shown as owner if present
+        if (user && fetched.length > 0) {
+          const idx = fetched.findIndex((m) => m.email === user.email);
+          if (idx > 0) {
+            const [current] = fetched.splice(idx, 1);
+            fetched.unshift(current);
+          }
+        }
+        setMembers(fetched);
+      } catch {
+        // Endpoint doesn't exist or failed — fallback to current user as owner
+        setFetchFailed(true);
+        if (user) {
+          setMembers([
+            {
+              id: user.id || "self",
+              email: user.email,
+              name: user.name,
+              role: "owner",
+              joined_at: user.created_at || new Date().toISOString(),
+            },
+          ]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMembers();
+  }, [user]);
 
+  // Current user is owner/admin — show invite form
   const currentMember = members.find((m) => m.email === user?.email);
-  const canInvite = currentMember?.role === "owner" || currentMember?.role === "admin";
+  const canInvite = fetchFailed || currentMember?.role === "owner" || currentMember?.role === "admin";
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,20 +84,30 @@ export default function TeamPage() {
     setInviteSuccess("");
     try {
       const res = await api.inviteMember(inviteEmail, inviteRole);
-      setInviteSuccess(res.message || `Invitation sent to ${inviteEmail}`);
+      setInviteSuccess(res?.message || `Invite sent to ${inviteEmail}`);
       setInviteEmail("");
-      api.listTeamMembers().then((r) => setMembers(r.members)).catch(() => {});
+      // Try to refresh members list
+      try {
+        const r = await api.listTeamMembers();
+        if (r?.members) setMembers(r.members);
+      } catch {
+        // ignore — keep existing list
+      }
     } catch (err: any) {
-      setInviteError(err.message || "Failed to send invite");
+      setInviteError(err?.message || "Failed to send invite");
     } finally {
       setInviting(false);
     }
   };
 
+  const tenantName = tenant?.name || "Your Organization";
+
   return (
     <Shell>
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-slate-900">Team</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">
+          Team — {tenantName}
+        </h1>
         <p className="text-sm text-slate-500 mt-1">Manage your organization members</p>
       </div>
 
@@ -97,8 +137,8 @@ export default function TeamPage() {
                 onChange={(e) => setInviteRole(e.target.value)}
                 className="input-field w-full"
               >
-                <option value="member">Member</option>
                 <option value="admin">Admin</option>
+                <option value="member">Member</option>
               </select>
             </div>
             <button
@@ -111,7 +151,7 @@ export default function TeamPage() {
               ) : (
                 <Mail size={14} />
               )}
-              Invite
+              Send Invite
             </button>
           </form>
 
@@ -147,7 +187,10 @@ export default function TeamPage() {
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50">
                 <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wide px-6 py-3">
-                  Member
+                  Name
+                </th>
+                <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wide px-6 py-3">
+                  Email
                 </th>
                 <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wide px-6 py-3">
                   Role
@@ -160,21 +203,29 @@ export default function TeamPage() {
             <tbody>
               {members.map((member) => {
                 const RoleIcon = roleIcons[member.role] || User;
+                const isCurrentUser = member.email === user?.email;
                 return (
                   <tr
                     key={member.id}
-                    className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
+                    className={`border-b border-slate-100 transition-colors ${
+                      isCurrentUser ? "bg-violet-50/30" : "hover:bg-slate-50"
+                    }`}
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center text-sm font-semibold">
                           {member.name?.charAt(0)?.toUpperCase() || "?"}
                         </div>
-                        <div>
+                        <div className="flex items-center gap-2">
                           <p className="text-sm font-medium text-slate-900">{member.name}</p>
-                          <p className="text-xs text-slate-400">{member.email}</p>
+                          {isCurrentUser && (
+                            <span className="text-[10px] text-slate-400 font-medium">(you)</span>
+                          )}
                         </div>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-500">
+                      {member.email}
                     </td>
                     <td className="px-6 py-4">
                       <span

@@ -199,12 +199,12 @@ export const api = {
   // Team
   listTeamMembers: () =>
     apiFetch<{ members: { id: string; email: string; name: string; role: string; joined_at: string }[] }>(
-      "/api/team"
+      "/api/team/members"
     ),
 
   inviteMember: (email: string, role: string) =>
     apiFetch<{ success: boolean; message: string }>(
-      "/api/team/invite",
+      "/api/auth/invite",
       { method: "POST", body: JSON.stringify({ email, role }) }
     ),
 
