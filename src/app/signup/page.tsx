@@ -4,6 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { api } from "@/lib/api";
+import { Building2, Users } from "lucide-react";
+
+type OrgMode = "create" | "join";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -12,7 +16,10 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [tenantName, setTenantName] = useState("");
+  const [orgMode, setOrgMode] = useState<OrgMode>("create");
+  const [orgName, setOrgName] = useState("");
+  const [orgCode, setOrgCode] = useState("");
+  const [tenantWarning, setTenantWarning] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -22,8 +29,26 @@ export default function SignupPage() {
       return "Valid email is required";
     if (password.length < 8) return "Password must be at least 8 characters";
     if (password !== confirmPassword) return "Passwords do not match";
-    if (!tenantName.trim()) return "Organization name is required";
+    if (orgMode === "create" && !orgName.trim()) return "Organization name is required";
+    if (orgMode === "join" && !orgCode.trim()) return "Organization code is required";
     return null;
+  };
+
+  const checkTenantName = async () => {
+    if (!orgName.trim()) return;
+    try {
+      const res = await api.checkTenant(orgName.trim());
+      if (res?.exists) {
+        setTenantWarning(
+          `This organization already exists. Switch to "Join existing" and enter the code: ${res.slug || orgName.toLowerCase().replace(/\s+/g, "-")}`
+        );
+      } else {
+        setTenantWarning("");
+      }
+    } catch {
+      // endpoint may not exist yet — ignore
+      setTenantWarning("");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,10 +61,23 @@ export default function SignupPage() {
     setError("");
     setLoading(true);
     try {
-      await signup(email, password, name, tenantName);
+      if (orgMode === "create") {
+        await signup(email, password, name, { tenant_name: orgName.trim() });
+      } else {
+        await signup(email, password, name, { join_tenant_slug: orgCode.trim() });
+      }
       router.push("/");
     } catch (err: any) {
-      setError(err.message || "Failed to create account");
+      const msg = err?.message || "Failed to create account";
+      if (/already taken/i.test(msg) || /already exists/i.test(msg)) {
+        setError(`Organization name already taken. Switch to "Join existing" to join it.`);
+      } else if (/not found/i.test(msg) && orgMode === "join") {
+        setError("Organization code not found. Check with your admin.");
+      } else if (/already registered/i.test(msg) || /already exists/i.test(msg) && /email/i.test(msg)) {
+        setError("ACCOUNT_EXISTS");
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -67,9 +105,17 @@ export default function SignupPage() {
         {/* Card */}
         <div className="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
+            {error && error !== "ACCOUNT_EXISTS" && (
               <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3">
                 {error}
+              </div>
+            )}
+            {error === "ACCOUNT_EXISTS" && (
+              <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3">
+                Account already exists.{" "}
+                <Link href="/login" className="text-violet-400 hover:text-violet-300 font-medium underline">
+                  Sign in instead
+                </Link>
               </div>
             )}
 
@@ -130,18 +176,72 @@ export default function SignupPage() {
               </div>
             </div>
 
+            {/* Org mode selector */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                Organization name
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Organization
               </label>
-              <input
-                type="text"
-                value={tenantName}
-                onChange={(e) => setTenantName(e.target.value)}
-                placeholder="Acme Inc."
-                className={inputClass}
-                required
-              />
+              <div className="flex rounded-lg overflow-hidden border border-slate-600 mb-3">
+                <button
+                  type="button"
+                  onClick={() => { setOrgMode("create"); setError(""); setTenantWarning(""); }}
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                    orgMode === "create"
+                      ? "bg-emerald-500/15 text-emerald-400 border-r border-emerald-500/30"
+                      : "bg-slate-700/30 text-slate-400 border-r border-slate-600 hover:bg-slate-700/50"
+                  }`}
+                >
+                  <Building2 size={14} />
+                  Create new
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setOrgMode("join"); setError(""); setTenantWarning(""); }}
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                    orgMode === "join"
+                      ? "bg-emerald-500/15 text-emerald-400"
+                      : "bg-slate-700/30 text-slate-400 hover:bg-slate-700/50"
+                  }`}
+                >
+                  <Users size={14} />
+                  Join existing
+                </button>
+              </div>
+
+              {orgMode === "create" && (
+                <div>
+                  <input
+                    type="text"
+                    value={orgName}
+                    onChange={(e) => { setOrgName(e.target.value); setTenantWarning(""); }}
+                    onBlur={checkTenantName}
+                    placeholder="Acme Inc."
+                    className={inputClass}
+                    required
+                  />
+                  {tenantWarning && (
+                    <p className="mt-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+                      {tenantWarning}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {orgMode === "join" && (
+                <div>
+                  <input
+                    type="text"
+                    value={orgCode}
+                    onChange={(e) => setOrgCode(e.target.value)}
+                    placeholder="e.g. apple, my-company"
+                    className={inputClass}
+                    required
+                  />
+                  <p className="mt-1.5 text-xs text-slate-500">
+                    Ask your team admin for the organization code
+                  </p>
+                </div>
+              )}
             </div>
 
             <button
@@ -152,7 +252,7 @@ export default function SignupPage() {
               {loading && (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               )}
-              {loading ? "Creating account..." : "Create account"}
+              {loading ? "Creating account..." : orgMode === "create" ? "Create account" : "Join & create account"}
             </button>
           </form>
         </div>

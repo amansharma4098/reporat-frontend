@@ -17,7 +17,7 @@ interface AuthContextValue {
   loading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string, tenant_name: string) => Promise<void>;
+  signup: (email: string, password: string, name: string, opts: { tenant_name?: string; join_tenant_slug?: string }) => Promise<void>;
   logout: () => void;
 }
 
@@ -38,8 +38,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signup = useCallback(
-    async (email: string, password: string, name: string, tenant_name: string) => {
-      const res = await api.signup(email, password, name, tenant_name);
+    async (email: string, password: string, name: string, opts: { tenant_name?: string; join_tenant_slug?: string }) => {
+      const res = await api.signup(email, password, name, opts);
       setTokens(res.access_token, res.refresh_token);
       setUser(res.user);
       setTenant(res.tenant);

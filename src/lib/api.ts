@@ -127,11 +127,14 @@ export const api = {
       body: JSON.stringify({ email, password }),
     }),
 
-  signup: (email: string, password: string, name: string, tenant_name: string) =>
+  signup: (email: string, password: string, name: string, opts: { tenant_name?: string; join_tenant_slug?: string }) =>
     apiFetch<AuthResponse>("/api/auth/signup", {
       method: "POST",
-      body: JSON.stringify({ email, password, name, tenant_name }),
+      body: JSON.stringify({ email, password, name, ...opts }),
     }),
+
+  checkTenant: (tenantName: string) =>
+    apiFetch<{ exists: boolean; slug?: string }>(`/api/auth/tenant-check?name=${encodeURIComponent(tenantName)}`),
 
   getMe: () => apiFetch<{ user: User; tenant?: import("@/types").Tenant }>("/api/auth/me"),
 
