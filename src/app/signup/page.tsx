@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
@@ -19,9 +19,29 @@ export default function SignupPage() {
   const [orgMode, setOrgMode] = useState<OrgMode>("create");
   const [orgName, setOrgName] = useState("");
   const [orgCode, setOrgCode] = useState("");
+  const [tenants, setTenants] = useState<{ name: string; slug: string }[]>([]);
+  const [tenantsLoading, setTenantsLoading] = useState(false);
   const [tenantWarning, setTenantWarning] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const fetchTenants = async () => {
+    setTenantsLoading(true);
+    try {
+      const res = await api.listTenants();
+      setTenants(res?.tenants ?? []);
+    } catch {
+      setTenants([]);
+    } finally {
+      setTenantsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (orgMode === "join") {
+      fetchTenants();
+    }
+  }, [orgMode]);
 
   const validate = (): string | null => {
     if (!name.trim()) return "Name is required";
@@ -30,7 +50,7 @@ export default function SignupPage() {
     if (password.length < 8) return "Password must be at least 8 characters";
     if (password !== confirmPassword) return "Passwords do not match";
     if (orgMode === "create" && !orgName.trim()) return "Organization name is required";
-    if (orgMode === "join" && !orgCode.trim()) return "Organization code is required";
+    if (orgMode === "join" && !orgCode) return "Please select an organization";
     return null;
   };
 
@@ -229,17 +249,30 @@ export default function SignupPage() {
 
               {orgMode === "join" && (
                 <div>
-                  <input
-                    type="text"
-                    value={orgCode}
-                    onChange={(e) => setOrgCode(e.target.value)}
-                    placeholder="e.g. apple, my-company"
-                    className={inputClass}
-                    required
-                  />
-                  <p className="mt-1.5 text-xs text-slate-500">
-                    Ask your team admin for the organization code
-                  </p>
+                  {tenantsLoading ? (
+                    <div className="flex items-center gap-2 h-11 px-4 text-slate-500 text-sm">
+                      <div className="w-4 h-4 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" />
+                      Loading organizations...
+                    </div>
+                  ) : tenants.length === 0 ? (
+                    <p className="text-sm text-slate-400 bg-slate-700/30 rounded-lg px-4 py-3">
+                      No organizations found. Create a new one instead.
+                    </p>
+                  ) : (
+                    <select
+                      value={orgCode}
+                      onChange={(e) => setOrgCode(e.target.value)}
+                      className={inputClass}
+                      required
+                    >
+                      <option value="">Select an organization...</option>
+                      {tenants.map((t) => (
+                        <option key={t.slug} value={t.slug}>
+                          {t.name} ({t.slug})
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               )}
             </div>

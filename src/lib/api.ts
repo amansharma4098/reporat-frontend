@@ -136,6 +136,9 @@ export const api = {
   checkTenant: (tenantName: string) =>
     apiFetch<{ exists: boolean; slug?: string }>(`/api/auth/tenant-check?name=${encodeURIComponent(tenantName)}`),
 
+  listTenants: () =>
+    apiFetch<{ tenants: { name: string; slug: string }[] }>("/api/auth/tenants"),
+
   getMe: () => apiFetch<{ user: User; tenant?: import("@/types").Tenant }>("/api/auth/me"),
 
   refreshToken: () => tryRefresh(),
