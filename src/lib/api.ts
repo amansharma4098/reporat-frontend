@@ -9,42 +9,65 @@ import type {
 } from "@/types";
 import { getCookie, setCookie, deleteCookie } from "@/lib/cookies";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://reporat-backend-production.up.railway.app";
+export const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://reporat-backend-production.up.railway.app";
 
 // ---------------------------------------------------------------------------
-// Token management — memory cache backed by cookies
+// Token management — in-memory cache backed by cookies
 // ---------------------------------------------------------------------------
 
-let _memoryToken: string | null = null;
-let _memoryRefresh: string | null = null;
+let _inMemoryToken: string | null = null;
+let _inMemoryRefresh: string | null = null;
 
 export function getAccessToken(): string | null {
-  if (_memoryToken) return _memoryToken;
-  _memoryToken = getCookie("reporat_token");
-  return _memoryToken;
+  if (_inMemoryToken) return _inMemoryToken;
+  const fromCookie = getCookie("rr_token");
+  if (fromCookie) _inMemoryToken = fromCookie;
+  return fromCookie;
 }
 
 function getRefreshToken(): string | null {
-  if (_memoryRefresh) return _memoryRefresh;
-  _memoryRefresh = getCookie("reporat_refresh");
-  return _memoryRefresh;
+  if (_inMemoryRefresh) return _inMemoryRefresh;
+  const fromCookie = getCookie("rr_refresh");
+  if (fromCookie) _inMemoryRefresh = fromCookie;
+  return fromCookie;
 }
 
 export function setTokens(access: string, refresh: string) {
-  _memoryToken = access;
-  _memoryRefresh = refresh;
-  setCookie("reporat_token", access, 1800); // 30 min
-  setCookie("reporat_refresh", refresh, 604800); // 7 days
+  _inMemoryToken = access;
+  _inMemoryRefresh = refresh;
+  setCookie("rr_token", access, 1800); // 30 min
+  setCookie("rr_refresh", refresh, 604800); // 7 days
 }
 
 export function clearTokens() {
-  _memoryToken = null;
-  _memoryRefresh = null;
+  _inMemoryToken = null;
+  _inMemoryRefresh = null;
+  deleteCookie("rr_token");
+  deleteCookie("rr_refresh");
+  // Clear legacy cookie names from older versions
   deleteCookie("reporat_token");
   deleteCookie("reporat_refresh");
-  // Also clear old cookie names from previous version
   deleteCookie("reporat_access_token");
   deleteCookie("reporat_refresh_token");
+}
+
+// ---------------------------------------------------------------------------
+// Auth header helper — reads memory first, then falls back to cookie
+// ---------------------------------------------------------------------------
+
+function getAuthHeader(): Record<string, string> {
+  if (_inMemoryToken) return { Authorization: "Bearer " + _inMemoryToken };
+  if (typeof document !== "undefined") {
+    const m = document.cookie.match(/(?:^|; )rr_token=([^;]*)/);
+    const token = m ? decodeURIComponent(m[1]) : null;
+    if (token) {
+      _inMemoryToken = token;
+      return { Authorization: "Bearer " + token };
+    }
+  }
+  return {};
 }
 
 // ---------------------------------------------------------------------------
@@ -54,13 +77,9 @@ export function clearTokens() {
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    ...getAuthHeader(),
     ...(options?.headers as Record<string, string>),
   };
-
-  const token = getAccessToken();
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
 
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
@@ -71,10 +90,14 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   if (res.status === 401 && getRefreshToken()) {
     const refreshed = await tryRefresh();
     if (refreshed) {
-      headers["Authorization"] = `Bearer ${_memoryToken}`;
+      const retryHeaders: Record<string, string> = {
+        "Content-Type": "application/json",
+        ...getAuthHeader(),
+        ...(options?.headers as Record<string, string>),
+      };
       const retry = await fetch(`${API_BASE}${path}`, {
         ...options,
-        headers,
+        headers: retryHeaders,
       });
       if (!retry.ok) {
         const err = await retry.json().catch(() => ({ detail: "Request failed" }));

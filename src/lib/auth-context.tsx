@@ -8,7 +8,8 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { api, setTokens, clearTokens, getAccessToken } from "@/lib/api";
+import { api, API_BASE, setTokens, clearTokens } from "@/lib/api";
+import { getCookie, setCookie, deleteCookie } from "@/lib/cookies";
 import type { User, Tenant } from "@/types";
 
 interface AuthContextValue {
@@ -17,7 +18,12 @@ interface AuthContextValue {
   loading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string, opts: { tenant_name?: string; join_tenant_slug?: string }) => Promise<void>;
+  signup: (
+    email: string,
+    password: string,
+    name: string,
+    opts: { tenant_name?: string; join_tenant_slug?: string }
+  ) => Promise<void>;
   logout: () => void;
 }
 
@@ -38,7 +44,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signup = useCallback(
-    async (email: string, password: string, name: string, opts: { tenant_name?: string; join_tenant_slug?: string }) => {
+    async (
+      email: string,
+      password: string,
+      name: string,
+      opts: { tenant_name?: string; join_tenant_slug?: string }
+    ) => {
       const res = await api.signup(email, password, name, opts);
       setTokens(res.access_token, res.refresh_token);
       setUser(res.user);
@@ -56,46 +67,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // On mount, restore session from cookies
+  // ── On mount: restore session from cookies ──────────────────────────────
   useEffect(() => {
     const restore = async () => {
-      try {
-        // 1. Check for existing access token cookie
-        const token = getAccessToken();
-        if (!token) {
-          // No access token — try refresh
-          const refreshed = await api.refreshToken();
-          if (!refreshed) {
-            // No valid session at all
+      // 1. Try existing access token from cookie
+      const token = getCookie("rr_token");
+      if (token) {
+        try {
+          const res = await fetch(API_BASE + "/api/auth/me", {
+            headers: { Authorization: "Bearer " + token },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            // Sync token into memory so apiFetch picks it up
+            setTokens(token, getCookie("rr_refresh") || "");
+            setUser(data.user);
+            if (data.tenant) setTenant(data.tenant);
+            setLoading(false);
             return;
           }
+        } catch {
+          // token invalid or network error — fall through to refresh
         }
+      }
 
-        // 2. Fetch current user with the (possibly refreshed) token
-        const res = await api.getMe();
-        setUser(res.user);
-        if (res.tenant) {
-          setTenant(res.tenant);
-        }
-      } catch {
-        // Access token invalid — try refresh once
+      // 2. Access token missing or /me failed — try refresh
+      const refresh = getCookie("rr_refresh");
+      if (refresh) {
         try {
-          const refreshed = await api.refreshToken();
-          if (refreshed) {
-            const res = await api.getMe();
-            setUser(res.user);
-            if (res.tenant) {
-              setTenant(res.tenant);
+          const res = await fetch(API_BASE + "/api/auth/refresh", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh_token: refresh }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const newAccess = data.access_token;
+            const newRefresh = data.refresh_token || refresh;
+            setCookie("rr_token", newAccess, 1800);
+            setCookie("rr_refresh", newRefresh, 604800);
+            setTokens(newAccess, newRefresh);
+
+            // Now call /me with the fresh token
+            const meRes = await fetch(API_BASE + "/api/auth/me", {
+              headers: { Authorization: "Bearer " + newAccess },
+            });
+            if (meRes.ok) {
+              const meData = await meRes.json();
+              setUser(meData.user);
+              if (meData.tenant) setTenant(meData.tenant);
+              setLoading(false);
+              return;
             }
-          } else {
-            clearTokens();
           }
         } catch {
-          clearTokens();
+          // refresh failed — fall through
         }
-      } finally {
-        setLoading(false);
       }
+
+      // 3. Nothing worked — user is not authenticated
+      clearTokens();
+      setLoading(false);
     };
 
     restore();
