@@ -5,6 +5,14 @@ import type { Issue } from "@/types";
 import SeverityBadge from "@/components/ui/SeverityBadge";
 import { X } from "lucide-react";
 
+const sourceDot: Record<string, string> = {
+  static_analysis: "bg-zinc-400",
+  performance: "bg-amber-400",
+  database: "bg-blue-400",
+  ai_test: "bg-red-400",
+  test_failure: "bg-red-400",
+};
+
 export default function IssuesTable({ issues }: { issues: Issue[] }) {
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
 
@@ -37,7 +45,8 @@ export default function IssuesTable({ issues }: { issues: Issue[] }) {
           <div>
             <SeverityBadge severity={issue.severity} />
           </div>
-          <span className="text-11 text-zinc-400">
+          <span className="text-11 text-zinc-400 flex items-center gap-1.5">
+            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${sourceDot[issue.source] ?? "bg-zinc-300"}`} />
             {issue.source?.replace("_", " ") ?? "unknown"}
           </span>
           <div className="flex items-center gap-1">

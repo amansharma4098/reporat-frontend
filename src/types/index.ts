@@ -83,7 +83,7 @@ export interface Issue {
   file_path: string;
   line_number: number | null;
   severity: Severity;
-  source: "static_analysis" | "ai_test" | "test_failure";
+  source: "static_analysis" | "ai_test" | "test_failure" | "performance" | "database";
   raw_output: string | null;
 }
 

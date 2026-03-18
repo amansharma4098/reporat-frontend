@@ -18,12 +18,23 @@ const eventDot: Record<string, string> = {
 export default function DashboardPage() {
   const [scans, setScans] = useState<ScanSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [perfScore, setPerfScore] = useState<number | null>(null);
 
   useEffect(() => {
     api.listScans()
       .then((res) => setScans(res.scans))
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    api.getPerfTests()
+      .then((res) => {
+        const tests = res?.tests ?? res ?? [];
+        if (Array.isArray(tests) && tests.length > 0) {
+          const latest = tests[tests.length - 1];
+          setPerfScore(latest?.score ?? latest?.result?.score ?? null);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const totalIssues = scans.reduce((acc, s) => acc + s.total_issues, 0);
@@ -57,11 +68,12 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-5 gap-4 mb-8">
         <StatCard label="Total Scans" value={scans.length} sub={`${completedScans} completed`} />
         <StatCard label="Issues Found" value={totalIssues} />
         <StatCard label="Tests Generated" value={totalTests} />
         <StatCard label="Bugs Filed" value={totalBugs} />
+        <StatCard label="Perf Score" value={perfScore ?? "--"} sub="Latest audit" />
       </div>
 
       {/* Recent Scans */}

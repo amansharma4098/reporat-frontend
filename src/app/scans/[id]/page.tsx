@@ -62,6 +62,7 @@ export default function ScanDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"issues" | "tests" | "bugs" | "diff">("issues");
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
 
   // Diff state
   const [diff, setDiff] = useState<any>(null);
@@ -335,8 +336,51 @@ export default function ScanDetailPage() {
         </div>
       </div>
 
+      {/* Source filters */}
+      {activeTab === "issues" && issues.length > 0 && (() => {
+        const sourceCounts: Record<string, number> = {};
+        issues.forEach((issue) => {
+          const src = issue.source ?? "unknown";
+          sourceCounts[src] = (sourceCounts[src] ?? 0) + 1;
+        });
+        const sourceFilters = [
+          { key: "all", label: "All", count: issues.length },
+          { key: "static_analysis", label: "Static Analysis", count: sourceCounts["static_analysis"] ?? 0 },
+          { key: "performance", label: "Performance", count: sourceCounts["performance"] ?? 0 },
+          { key: "database", label: "Database", count: sourceCounts["database"] ?? 0 },
+          { key: "ai_test", label: "Test Failures", count: (sourceCounts["ai_test"] ?? 0) + (sourceCounts["test_failure"] ?? 0) },
+        ].filter((f) => f.key === "all" || f.count > 0);
+        return (
+          <div className="flex gap-0 mb-4 border-b border-zinc-100">
+            {sourceFilters.map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setSourceFilter(f.key)}
+                className={`px-3 py-2 text-12 font-medium transition-colors border-b-2 -mb-px ${
+                  sourceFilter === f.key
+                    ? "border-zinc-900 text-zinc-900"
+                    : "border-transparent text-zinc-400 hover:text-zinc-600"
+                }`}
+              >
+                {f.label} ({f.count})
+              </button>
+            ))}
+          </div>
+        );
+      })()}
+
       {/* Tab Content */}
-      {activeTab === "issues" && <IssuesTable issues={issues} />}
+      {activeTab === "issues" && (
+        <IssuesTable
+          issues={
+            sourceFilter === "all"
+              ? issues
+              : sourceFilter === "ai_test"
+                ? issues.filter((i) => i.source === "ai_test" || i.source === "test_failure")
+                : issues.filter((i) => i.source === sourceFilter)
+          }
+        />
+      )}
 
       {activeTab === "tests" && (
         <div className="space-y-1">

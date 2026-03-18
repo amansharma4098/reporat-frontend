@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   ScanSearch,
   Bug,
+  Zap,
   Plug,
   Settings,
   Users,
@@ -18,6 +19,7 @@ const mainNav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/scan", label: "New Scan", icon: ScanSearch },
   { href: "/scans", label: "Scan History", icon: Bug },
+  { href: "/performance", label: "Performance", icon: Zap },
 ];
 
 const settingsNav = [

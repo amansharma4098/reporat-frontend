@@ -299,6 +299,19 @@ export const api = {
   toggleSchedule: (id: string) =>
     apiFetch<any>(`/api/schedules/${id}`, { method: "PATCH" }),
 
+  // Performance
+  runLoadTest: (data: { target_url: string; endpoints?: any[]; concurrent_users?: number; duration_seconds?: number }) =>
+    apiFetch<any>("/api/performance/loadtest", { method: "POST", body: JSON.stringify(data) }),
+
+  getLoadTestResult: (id: string) =>
+    apiFetch<any>(`/api/performance/loadtest/${id}`),
+
+  runFrontendPerf: (url: string) =>
+    apiFetch<any>("/api/performance/frontend", { method: "POST", body: JSON.stringify({ url }) }),
+
+  getPerfTests: () =>
+    apiFetch<any>("/api/performance/tests"),
+
   // WebSocket URL
   getWSUrl: (scanId: string) => {
     const wsBase = API_BASE.replace("http", "ws");
