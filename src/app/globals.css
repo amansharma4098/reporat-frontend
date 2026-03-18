@@ -5,14 +5,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 body {
-  background: #f9fafb;
-  color: #111827;
+  background: #f1f5f9;
+  color: #0f172a;
   font-family: "Inter", system-ui, -apple-system, sans-serif;
 }
 
 ::selection {
-  background: rgba(5, 150, 105, 0.15);
-  color: #064e3b;
+  background: rgba(124, 58, 237, 0.15);
+  color: #4c1d95;
 }
 
 ::-webkit-scrollbar {
@@ -20,16 +20,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f9fafb;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: #cbd5e1;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: #94a3b8;
 }
 
 /* Page enter animation */
@@ -75,29 +75,29 @@ body {
 
 @layer components {
   .card {
-    @apply bg-white border border-gray-200 rounded-xl;
+    @apply bg-white border border-slate-200 rounded-xl shadow-sm;
   }
 
   .card-hover {
-    @apply card transition-all duration-200 hover:shadow-md hover:border-gray-300;
+    @apply card transition-all duration-200 hover:shadow-md hover:border-slate-300;
   }
 
   .btn-primary {
-    @apply bg-emerald-600 text-white font-medium px-4 py-2.5 rounded-lg shadow-sm
-           hover:bg-emerald-700 transition-all duration-200
+    @apply bg-violet-600 text-white font-medium px-4 py-2.5 rounded-lg shadow-sm
+           hover:bg-violet-700 transition-all duration-200
            active:scale-[0.98] text-sm;
   }
 
   .btn-secondary {
-    @apply bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-lg
-           hover:bg-gray-50 hover:border-gray-300 transition-all duration-200
+    @apply bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-lg shadow-sm
+           hover:bg-slate-50 hover:border-slate-300 transition-all duration-200
            active:scale-[0.98] text-sm;
   }
 
   .input-field {
-    @apply bg-white border border-gray-300 rounded-lg px-4 py-2.5 h-10
-           text-gray-900 placeholder-gray-400 text-sm
-           focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500
+    @apply bg-white border border-slate-300 rounded-lg px-4 py-2.5 h-10
+           text-slate-900 placeholder-slate-400 text-sm
+           focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500
            transition-all duration-200;
   }
 
@@ -118,6 +118,6 @@ body {
   }
 
   .badge-info {
-    @apply bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium;
+    @apply bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-medium;
   }
 }

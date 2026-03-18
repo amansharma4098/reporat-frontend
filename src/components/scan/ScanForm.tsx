@@ -53,7 +53,7 @@ export default function ScanForm({ onScanStarted }: Props) {
     <div className="space-y-5">
       {/* Repo URL */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">
           Repository URL
         </label>
         <input
@@ -68,7 +68,7 @@ export default function ScanForm({ onScanStarted }: Props) {
       {/* Branch + Source Row */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">
             <GitBranch size={12} className="inline mr-1" />
             Branch
           </label>
@@ -80,7 +80,7 @@ export default function ScanForm({ onScanStarted }: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">
             Repo Source
           </label>
           <select
@@ -144,7 +144,7 @@ function ToggleSwitch({
       {/* Switch track */}
       <div
         className={`relative w-10 h-[22px] rounded-full transition-colors duration-200 ${
-          checked ? "bg-emerald-500" : "bg-gray-200"
+          checked ? "bg-violet-500" : "bg-slate-200"
         }`}
       >
         {/* Switch thumb */}
@@ -155,8 +155,8 @@ function ToggleSwitch({
         />
       </div>
       <div className="flex items-center gap-1.5">
-        <Icon size={14} className={checked ? "text-emerald-600" : "text-gray-400"} />
-        <span className={`text-sm font-medium ${checked ? "text-gray-700" : "text-gray-400"}`}>
+        <Icon size={14} className={checked ? "text-violet-600" : "text-slate-400"} />
+        <span className={`text-sm font-medium ${checked ? "text-slate-700" : "text-slate-400"}`}>
           {label}
         </span>
       </div>

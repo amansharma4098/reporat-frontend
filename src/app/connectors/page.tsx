@@ -111,12 +111,16 @@ export default function ConnectorsPage() {
     }));
   };
 
+  const toggleExpand = (type: string) => {
+    setExpanded((prev) => (prev === type ? null : type));
+  };
+
   return (
     <Shell>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Connectors</h1>
-          <p className="text-sm text-gray-500 mt-1">Configure bug tracker integrations</p>
+          <h1 className="text-2xl font-semibold text-slate-900">Connectors</h1>
+          <p className="text-sm text-slate-500 mt-1">Configure bug tracker integrations</p>
         </div>
         <button onClick={fetchData} className="btn-secondary flex items-center gap-2">
           <RefreshCw size={14} />
@@ -125,77 +129,77 @@ export default function ConnectorsPage() {
       </div>
 
       {loading ? (
-        <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
-          <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <div className="bg-white border border-slate-200 rounded-xl p-12 text-center shadow-sm">
+          <div className="w-6 h-6 border-2 border-violet-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-4">
           {displayConnectors.map((c) => {
             const meta = trackerMeta[c.type] ?? { label: c.type, color: "#888" };
             const fields = TRACKER_FIELDS[c.type] ?? [];
             const isExpanded = expanded === c.type;
 
             return (
-              <div key={c.type} className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all duration-200">
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
+              <div key={c.type} className="bg-white rounded-xl border border-slate-200 shadow-sm transition-all duration-200 hover:shadow-md">
+                <div className="p-5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
                       <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+                        className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm"
                         style={{ backgroundColor: meta.color }}
                       >
                         {meta.label.charAt(0)}
                       </div>
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-900">
+                        <h3 className="text-sm font-semibold text-slate-900">
                           {meta.label}
                         </h3>
-                        <p className="text-xs text-gray-400">{c.type}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{c.type}</p>
                       </div>
                     </div>
 
-                    {c.connected ? (
-                      <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-medium bg-emerald-50 px-2.5 py-1 rounded-full">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                        Connected
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1.5 text-gray-500 text-xs font-medium bg-gray-100 px-2.5 py-1 rounded-full">
-                        <div className="w-2 h-2 rounded-full bg-gray-300" />
-                        Not configured
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => testConnector(c.type)}
-                      disabled={testing === c.type}
-                      className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
-                    >
-                      {testing === c.type ? (
-                        <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                    <div className="flex items-center gap-3">
+                      {c.connected ? (
+                        <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-medium bg-emerald-50 px-2.5 py-1 rounded-full">
+                          <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                          Connected
+                        </div>
                       ) : (
-                        <RefreshCw size={10} />
+                        <div className="flex items-center gap-1.5 text-slate-500 text-xs font-medium bg-slate-100 px-2.5 py-1 rounded-full">
+                          <div className="w-2 h-2 rounded-full bg-slate-300" />
+                          Not configured
+                        </div>
                       )}
-                      Test
-                    </button>
-                    <button
-                      onClick={() => setExpanded(isExpanded ? null : c.type)}
-                      className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
-                    >
-                      {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
-                      Configure
-                    </button>
+
+                      <button
+                        onClick={() => testConnector(c.type)}
+                        disabled={testing === c.type}
+                        className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
+                      >
+                        {testing === c.type ? (
+                          <div className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <RefreshCw size={10} />
+                        )}
+                        Test
+                      </button>
+                      <button
+                        onClick={() => toggleExpand(c.type)}
+                        className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
+                      >
+                        {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                        Configure
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Expanded config */}
                 {isExpanded && fields.length > 0 && (
-                  <div className="border-t border-gray-200 p-6 space-y-4 bg-gray-50/50 rounded-b-xl">
+                  <div className="border-t border-slate-200 p-5 space-y-4 bg-slate-50/70 rounded-b-xl">
                     {fields.map((field) => (
                       <div key={field.key}>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                        <label className="block text-xs font-medium text-slate-600 mb-1">
                           {field.label}
                         </label>
                         <input
@@ -208,7 +212,7 @@ export default function ConnectorsPage() {
                       </div>
                     ))}
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 pt-2">
                       <button
                         onClick={() => saveConfig(c.type)}
                         disabled={saving === c.type}

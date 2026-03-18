@@ -4,7 +4,7 @@ import type { ScanStatus } from "@/types";
 import { Loader2, CheckCircle2, XCircle, Clock } from "lucide-react";
 
 const statusConfig: Record<string, { color: string; icon: typeof Loader2 }> = {
-  pending: { color: "text-gray-400", icon: Clock },
+  pending: { color: "text-slate-400", icon: Clock },
   cloning: { color: "text-blue-500", icon: Loader2 },
   analyzing: { color: "text-amber-500", icon: Loader2 },
   generating_tests: { color: "text-purple-500", icon: Loader2 },
