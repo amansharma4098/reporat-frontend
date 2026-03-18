@@ -153,6 +153,12 @@ export const api = {
   getScanSummary: (scanId: string) =>
     apiFetch<ScanSummary>(`/api/scan/${scanId}/summary`),
 
+  deleteScan: (scanId: string) =>
+    apiFetch<any>(`/api/scan/${scanId}`, { method: "DELETE" }),
+
+  deleteAllScans: () =>
+    apiFetch<any>("/api/scan?all=true", { method: "DELETE" }),
+
   // Connectors
   listConnectors: () =>
     apiFetch<{ connectors: ConnectorStatus[] }>("/api/connectors"),

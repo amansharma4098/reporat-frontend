@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Shell from "@/components/layout/Shell";
 import StatCard from "@/components/ui/StatCard";
 import StatusIndicator from "@/components/ui/StatusIndicator";
@@ -19,6 +19,7 @@ import {
   XCircle,
   X,
   Loader2,
+  Trash2,
 } from "lucide-react";
 
 const trackerLogos: Record<string, { label: string; color: string; icon: string }> = {
@@ -52,6 +53,7 @@ const TRACKER_FIELDS: Record<string, { key: string; label: string; type: string;
 
 export default function ScanDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const scanId = params.id as string;
   const [scan, setScan] = useState<ScanDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -155,6 +157,20 @@ export default function ScanDetailPage() {
     });
   };
 
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteScan = async () => {
+    if (!window.confirm("Are you sure you want to delete this scan?")) return;
+    setDeleting(true);
+    try {
+      await api.deleteScan(scanId);
+      router.push("/scans");
+    } catch (err: any) {
+      setError(err?.message || "Failed to delete scan");
+      setDeleting(false);
+    }
+  };
+
   const trackerFields = selectedTracker ? (TRACKER_FIELDS[selectedTracker] ?? []) : [];
 
   if (error && !scan) {
@@ -222,12 +238,26 @@ export default function ScanDetailPage() {
           </p>
         </div>
 
-        {status === "completed" && issues.length > 0 && (
-          <button onClick={openFileBugs} className="btn-primary flex items-center gap-2">
-            <Bug size={16} />
-            File Bugs
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleDeleteScan}
+            disabled={deleting}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-white border border-red-300 text-red-600 hover:bg-red-50 transition-all duration-200 active:scale-[0.98]"
+          >
+            {deleting ? (
+              <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Trash2 size={14} />
+            )}
+            Delete Scan
           </button>
-        )}
+          {status === "completed" && issues.length > 0 && (
+            <button onClick={openFileBugs} className="btn-primary flex items-center gap-2">
+              <Bug size={16} />
+              File Bugs
+            </button>
+          )}
+        </div>
       </div>
 
       {scan.error && (

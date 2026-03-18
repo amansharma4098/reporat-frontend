@@ -4,9 +4,14 @@ import Link from "next/link";
 import type { ScanSummary } from "@/types";
 import StatusIndicator from "@/components/ui/StatusIndicator";
 import { repoName, timeAgo } from "@/lib/utils";
-import { ExternalLink, Bug, TestTube2, FileWarning, ScanSearch } from "lucide-react";
+import { ExternalLink, Bug, TestTube2, FileWarning, ScanSearch, Trash2 } from "lucide-react";
 
-export default function ScanList({ scans }: { scans: ScanSummary[] }) {
+interface ScanListProps {
+  scans: ScanSummary[];
+  onDeleteScan?: (scanId: string) => void;
+}
+
+export default function ScanList({ scans, onDeleteScan }: ScanListProps) {
   if (!scans.length) {
     return (
       <div className="bg-white border border-slate-200 rounded-xl p-12 text-center shadow-sm">
@@ -58,6 +63,19 @@ export default function ScanList({ scans }: { scans: ScanSummary[] }) {
               <Bug size={12} />
               <span className="font-medium">{scan.bugs_filed}</span>
             </div>
+            {onDeleteScan && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDeleteScan(scan.scan_id);
+                }}
+                className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                title="Delete scan"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
             <ExternalLink size={14} className="text-slate-300 group-hover:text-violet-500 transition-colors" />
           </div>
         </Link>
