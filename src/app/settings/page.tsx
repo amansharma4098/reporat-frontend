@@ -14,6 +14,53 @@ interface WebhookConfig {
   url?: string;
 }
 
+const sourceInstructions: Record<string, string> = {
+  github:
+    "Go to your GitHub repo \u2192 Settings \u2192 Webhooks \u2192 Add webhook \u2192 Paste this as Payload URL \u2192 Content type: application/json \u2192 Select \u2018Just the push event\u2019 \u2192 Add webhook",
+  gitlab:
+    "Go to your GitLab repo \u2192 Settings \u2192 Webhooks \u2192 Paste URL \u2192 Check \u2018Push events\u2019 \u2192 Add webhook",
+  azure_devops:
+    "Go to Azure DevOps \u2192 Project Settings \u2192 Service Hooks \u2192 Create \u2192 Web Hooks \u2192 Paste URL",
+};
+
+const sourceLabels: Record<string, string> = {
+  github: "GitHub",
+  gitlab: "GitLab",
+  azure_devops: "Azure DevOps",
+};
+
+function CopyableUrl({ url, id }: { url: string; id: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = () => {
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <code className="flex-1 bg-zinc-50 border border-zinc-200 rounded-md px-3 py-2 text-[12px] font-mono text-zinc-600 truncate select-all">
+        {url}
+      </code>
+      <button
+        onClick={copy}
+        className="flex items-center gap-1 px-2 py-1.5 text-zinc-400 hover:text-zinc-600 border border-zinc-200 rounded-md transition-colors flex-shrink-0"
+        title="Copy URL"
+      >
+        {copied ? (
+          <>
+            <Check size={13} />
+            <span className="text-11 text-emerald-600">Copied!</span>
+          </>
+        ) : (
+          <Copy size={13} />
+        )}
+      </button>
+    </div>
+  );
+}
+
 function WebhooksSection() {
   const [webhooks, setWebhooks] = useState<WebhookConfig[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,7 +69,7 @@ function WebhooksSection() {
   const [source, setSource] = useState("github");
   const [autoScan, setAutoScan] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [copied, setCopied] = useState<string | null>(null);
+  const [justCreated, setJustCreated] = useState<WebhookConfig | null>(null);
 
   const fetchWebhooks = async () => {
     try {
@@ -43,6 +90,7 @@ function WebhooksSection() {
     try {
       const res = await api.createWebhookConfig({ source, auto_scan: autoScan });
       setWebhooks((prev) => [...prev, res]);
+      setJustCreated(res);
       setShowForm(false);
       setSource("github");
       setAutoScan(true);
@@ -57,15 +105,10 @@ function WebhooksSection() {
     try {
       await api.deleteWebhookConfig(id);
       setWebhooks((prev) => prev.filter((w) => w.id !== id));
+      if (justCreated?.id === id) setJustCreated(null);
     } catch {
       // ignore
     }
-  };
-
-  const copyUrl = (url: string, id: string) => {
-    navigator.clipboard.writeText(url);
-    setCopied(id);
-    setTimeout(() => setCopied(null), 2000);
   };
 
   return (
@@ -73,7 +116,7 @@ function WebhooksSection() {
       <div className="flex items-center justify-between mb-1">
         <h2 className="text-[14px] font-semibold text-zinc-900">Webhooks</h2>
         {!showForm && (
-          <button onClick={() => setShowForm(true)} className="btn-secondary text-12">
+          <button onClick={() => { setShowForm(true); setJustCreated(null); }} className="btn-secondary text-12">
             Add webhook
           </button>
         )}
@@ -122,6 +165,25 @@ function WebhooksSection() {
         </div>
       )}
 
+      {/* Newly created webhook — prominent URL display */}
+      {justCreated?.url && (
+        <div className="bg-zinc-50 border border-zinc-200 rounded-md p-4 mb-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="text-13 font-medium text-zinc-900">
+              Webhook created for {sourceLabels[justCreated.source] ?? justCreated.source}
+            </span>
+          </div>
+          <CopyableUrl url={justCreated.url} id={justCreated.id} />
+          <p className="text-11 text-zinc-500 leading-relaxed">
+            {sourceInstructions[justCreated.source] ?? "Paste this URL into your repository\u2019s webhook settings."}
+          </p>
+          <button onClick={() => setJustCreated(null)} className="text-11 text-zinc-400 hover:text-zinc-600 font-medium">
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <div className="py-6 text-center">
           <div className="w-4 h-4 border-2 border-zinc-300 border-t-zinc-900 rounded-full animate-spin mx-auto" />
@@ -129,12 +191,12 @@ function WebhooksSection() {
       ) : webhooks.length === 0 ? (
         <p className="text-12 text-zinc-400 py-4">No webhooks configured</p>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {webhooks.map((w) => (
-            <div key={w.id} className="border border-zinc-200 rounded-md p-3">
-              <div className="flex items-center justify-between mb-2">
+            <div key={w.id} className="border border-zinc-200 rounded-md p-3 space-y-2.5">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-13 font-medium text-zinc-900 capitalize">{w.source}</span>
+                  <span className="text-13 font-medium text-zinc-900">{sourceLabels[w.source] ?? w.source}</span>
                   <span className={`text-11 px-1.5 py-0.5 rounded ${w.auto_scan ? "bg-zinc-100 text-zinc-600" : "bg-zinc-50 text-zinc-400"}`}>
                     {w.auto_scan ? "Auto-scan on" : "Auto-scan off"}
                   </span>
@@ -143,27 +205,14 @@ function WebhooksSection() {
                   <Trash2 size={13} strokeWidth={1.5} />
                 </button>
               </div>
-              {w.url && (
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 bg-zinc-50 border border-zinc-200 rounded-md px-3 py-2 text-12 font-mono text-zinc-600 truncate">
-                    {w.url}
-                  </code>
-                  <button
-                    onClick={() => copyUrl(w.url!, w.id)}
-                    className="p-1.5 text-zinc-400 hover:text-zinc-600 border border-zinc-200 rounded-md transition-colors"
-                    title="Copy URL"
-                  >
-                    {copied === w.id ? <Check size={13} /> : <Copy size={13} />}
-                  </button>
-                </div>
-              )}
+              {w.url && <CopyableUrl url={w.url} id={w.id} />}
+              <p className="text-11 text-zinc-400 leading-relaxed">
+                {sourceInstructions[w.source] ?? "Paste this URL into your repository\u2019s webhook settings."}
+              </p>
             </div>
           ))}
         </div>
       )}
-      <p className="text-11 text-zinc-400 mt-3">
-        Paste this URL into your repo Settings &rarr; Webhooks &rarr; Payload URL
-      </p>
     </div>
   );
 }
