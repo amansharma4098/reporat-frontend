@@ -10,23 +10,16 @@ import { api } from "@/lib/api";
 import { repoName, formatDate } from "@/lib/utils";
 import type { ScanDetail } from "@/types";
 import {
-  Bug,
-  TestTube2,
-  FileWarning,
-  Clock,
   ExternalLink,
-  CheckCircle2,
-  XCircle,
   X,
-  Loader2,
   Trash2,
 } from "lucide-react";
 
-const trackerLogos: Record<string, { label: string; color: string; icon: string }> = {
-  jira: { label: "Jira", color: "#2684FF", icon: "J" },
-  azure_boards: { label: "Azure Boards", color: "#0078D4", icon: "A" },
-  github_issues: { label: "GitHub Issues", color: "#238636", icon: "G" },
-  linear: { label: "Linear", color: "#5E6AD2", icon: "L" },
+const trackerLogos: Record<string, { label: string; icon: string }> = {
+  jira: { label: "Jira", icon: "J" },
+  azure_boards: { label: "Azure Boards", icon: "A" },
+  github_issues: { label: "GitHub Issues", icon: "G" },
+  linear: { label: "Linear", icon: "L" },
 };
 
 const TRACKER_FIELDS: Record<string, { key: string; label: string; type: string; placeholder: string }[]> = {
@@ -176,10 +169,9 @@ export default function ScanDetailPage() {
   if (error && !scan) {
     return (
       <Shell>
-        <div className="bg-white border border-slate-200 rounded-xl p-12 text-center shadow-sm">
-          <XCircle size={24} className="text-red-500 mx-auto mb-3" />
-          <p className="text-red-600 text-sm font-medium mb-1">Failed to load scan</p>
-          <p className="text-slate-400 text-xs">{error}</p>
+        <div className="py-12 text-center">
+          <p className="text-13 font-medium text-red-600 mb-1">Failed to load scan</p>
+          <p className="text-12 text-zinc-400">{error}</p>
         </div>
       </Shell>
     );
@@ -188,9 +180,9 @@ export default function ScanDetailPage() {
   if (loading || !scan) {
     return (
       <Shell>
-        <div className="bg-white border border-slate-200 rounded-xl p-12 text-center shadow-sm">
-          <div className="w-6 h-6 border-2 border-violet-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-slate-400 text-sm">Loading scan...</p>
+        <div className="py-12 text-center">
+          <div className="w-5 h-5 border-2 border-zinc-300 border-t-zinc-900 rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-12 text-zinc-400">Loading scan...</p>
         </div>
       </Shell>
     );
@@ -204,56 +196,44 @@ export default function ScanDetailPage() {
   const bySeverity = s.by_severity ?? {};
 
   const tabs = [
-    { key: "issues" as const, label: "Issues", icon: FileWarning },
-    { key: "tests" as const, label: "Tests", icon: TestTube2 },
-    { key: "bugs" as const, label: "Bugs", icon: Bug },
+    { key: "issues" as const, label: "Issues" },
+    { key: "tests" as const, label: "Tests" },
+    { key: "bugs" as const, label: "Bugs" },
   ];
 
   return (
     <Shell>
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            {status === "completed" ? (
-              <span className="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-700 text-xs font-medium px-3 py-1 rounded-full">
-                <CheckCircle2 size={12} /> Completed
-              </span>
-            ) : status === "failed" ? (
-              <span className="inline-flex items-center gap-1.5 bg-red-100 text-red-700 text-xs font-medium px-3 py-1 rounded-full">
-                <XCircle size={12} /> Failed
-              </span>
-            ) : (
-              <StatusIndicator status={status} />
-            )}
-            <span className="text-xs font-mono text-slate-400">{scanId?.slice(0, 8)}</span>
+          <div className="flex items-center gap-3 mb-1.5">
+            <StatusIndicator status={status} />
+            <span className="text-11 font-mono text-zinc-400">{scanId?.slice(0, 8)}</span>
           </div>
-          <h1 className="text-2xl font-semibold text-slate-900">
+          <h1 className="text-22 font-semibold text-zinc-900">
             {repoName(s.repo_url ?? "")}
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            <Clock size={10} className="inline mr-1" />
+          <p className="text-12 text-zinc-400 mt-1">
             {s.started_at ? `Started ${formatDate(s.started_at)}` : "Not started"}
             {s.completed_at && ` — Completed ${formatDate(s.completed_at)}`}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={handleDeleteScan}
             disabled={deleting}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-white border border-red-300 text-red-600 hover:bg-red-50 transition-all duration-200 active:scale-[0.98]"
+            className="btn-danger flex items-center gap-1.5"
           >
             {deleting ? (
-              <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+              <div className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
             ) : (
-              <Trash2 size={14} />
+              <Trash2 size={13} strokeWidth={1.5} />
             )}
-            Delete Scan
+            Delete
           </button>
           {status === "completed" && issues.length > 0 && (
-            <button onClick={openFileBugs} className="btn-primary flex items-center gap-2">
-              <Bug size={16} />
+            <button onClick={openFileBugs} className="btn-primary">
               File Bugs
             </button>
           )}
@@ -261,64 +241,55 @@ export default function ScanDetailPage() {
       </div>
 
       {scan.error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+        <div className="mb-5 bg-red-50 border border-red-200 text-red-600 text-12 rounded-md px-3 py-2">
           {scan.error}
         </div>
       )}
 
       {error && (
-        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700 text-sm">
+        <div className="mb-5 bg-amber-50 border border-amber-200 text-amber-700 text-12 rounded-md px-3 py-2">
           {error}
         </div>
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
-        <StatCard label="Issues" value={s.total_issues ?? 0} icon={FileWarning} accent />
-        <StatCard label="Tests Generated" value={s.tests_generated ?? 0} icon={TestTube2} />
-        <StatCard
-          label="Tests Passed"
-          value={s.tests_passed ?? 0}
-          icon={CheckCircle2}
-          sub={`${s.tests_failed ?? 0} failed`}
-        />
-        <StatCard label="Bugs Filed" value={s.bugs_filed ?? 0} icon={Bug} />
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <StatCard label="Issues" value={s.total_issues ?? 0} />
+        <StatCard label="Tests Generated" value={s.tests_generated ?? 0} />
+        <StatCard label="Tests Passed" value={s.tests_passed ?? 0} sub={`${s.tests_failed ?? 0} failed`} />
+        <StatCard label="Bugs Filed" value={s.bugs_filed ?? 0} />
       </div>
 
       {/* Severity breakdown */}
       {bySeverity && Object.keys(bySeverity).length > 0 && (
-        <div className="flex gap-3 mb-8">
+        <div className="flex gap-2 mb-6">
           {Object.entries(bySeverity)
             .filter(([_, count]) => (count as number) > 0)
             .map(([sev, count]) => (
-              <div key={sev} className={`badge-${sev} inline-flex items-center gap-1.5`}>
+              <span key={sev} className={`badge-${sev} inline-flex items-center gap-1`}>
                 <span className="font-semibold">{count as number}</span>
                 <span>{sev}</span>
-              </div>
+              </span>
             ))}
         </div>
       )}
 
       {/* Tab bar */}
-      <div className="border-b border-slate-200 mb-6">
+      <div className="border-b border-zinc-200 mb-5">
         <div className="flex gap-0">
-          {tabs.map((tab) => {
-            const TabIcon = tab.icon;
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-3 text-sm font-medium transition-all border-b-2 -mb-px ${
-                  activeTab === tab.key
-                    ? "border-violet-600 text-violet-700"
-                    : "border-transparent text-slate-400 hover:text-slate-600"
-                }`}
-              >
-                <TabIcon size={12} className="inline mr-1.5" />
-                {tab.label}
-              </button>
-            );
-          })}
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-4 py-2.5 text-12 font-medium transition-colors border-b-2 -mb-px ${
+                activeTab === tab.key
+                  ? "border-zinc-900 text-zinc-900"
+                  : "border-transparent text-zinc-400 hover:text-zinc-600"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -326,22 +297,18 @@ export default function ScanDetailPage() {
       {activeTab === "issues" && <IssuesTable issues={issues} />}
 
       {activeTab === "tests" && (
-        <div className="space-y-2">
+        <div className="space-y-1">
           {testResults.length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400 text-sm shadow-sm">No test results</div>
+            <p className="py-8 text-center text-12 text-zinc-400">No test results</p>
           ) : (
             testResults.map((t, i) => (
-              <div key={i} className="bg-white border border-slate-200 rounded-lg p-4 flex items-center justify-between hover:bg-slate-50 transition-colors shadow-sm">
-                <div className="flex items-center gap-3">
-                  {t.passed ? (
-                    <CheckCircle2 size={16} className="text-emerald-600" />
-                  ) : (
-                    <XCircle size={16} className="text-red-500" />
-                  )}
-                  <span className="text-sm font-mono text-slate-700">{t.test_file}</span>
+              <div key={i} className="flex items-center justify-between px-3 py-2.5 border-b border-zinc-100 hover:bg-zinc-50 transition-colors">
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-2 h-2 rounded-full ${t.passed ? "bg-emerald-500" : "bg-red-500"}`} />
+                  <span className="text-12 font-mono text-zinc-600">{t.test_file}</span>
                 </div>
                 {t.error && (
-                  <span className="text-xs font-mono text-red-500 truncate max-w-[300px]">
+                  <span className="text-11 font-mono text-red-500 truncate max-w-[300px]">
                     {t.error}
                   </span>
                 )}
@@ -352,22 +319,19 @@ export default function ScanDetailPage() {
       )}
 
       {activeTab === "bugs" && (
-        <div className="space-y-2">
+        <div className="space-y-1">
           {bugsFiled.length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400 text-sm shadow-sm">No bugs filed yet</div>
+            <p className="py-8 text-center text-12 text-zinc-400">No bugs filed yet</p>
           ) : (
             bugsFiled.map((b, i) => (
-              <div key={i} className="bg-white border border-slate-200 rounded-lg p-4 flex items-center justify-between hover:shadow-md transition-all shadow-sm">
-                <div className="flex items-center gap-3">
-                  <Bug size={14} className="text-violet-600" />
-                  <span className="text-sm font-mono text-slate-700">{b.tracker}</span>
-                </div>
+              <div key={i} className="flex items-center justify-between px-3 py-2.5 border-b border-zinc-100 hover:bg-zinc-50 transition-colors">
+                <span className="text-12 font-mono text-zinc-600">{b.tracker}</span>
                 {b.url && (
                   <a
                     href={b.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-700"
+                    className="flex items-center gap-1 text-11 font-medium text-zinc-500 hover:text-zinc-900"
                   >
                     View <ExternalLink size={10} />
                   </a>
@@ -380,39 +344,39 @@ export default function ScanDetailPage() {
 
       {/* File Bugs Modal */}
       {showFileBugs && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm modal-overlay">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto m-4 modal-card">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
+          <div className="bg-white rounded-lg border border-zinc-200 shadow-lg w-full max-w-xl max-h-[80vh] overflow-y-auto m-4">
             {/* Modal header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-200">
-              <h2 className="text-lg font-semibold text-slate-900">File Bugs</h2>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200">
+              <h2 className="text-13 font-semibold text-zinc-900">File Bugs</h2>
               <button
                 onClick={() => setShowFileBugs(false)}
-                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                className="p-1 text-zinc-400 hover:text-zinc-600 rounded transition-colors"
               >
-                <X size={18} />
+                <X size={16} strokeWidth={1.5} />
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-5 space-y-5">
               {/* Filed results */}
               {filedResults.length > 0 ? (
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-emerald-600">
-                    <CheckCircle2 size={20} />
-                    <span className="font-medium">
-                      Successfully filed {filedResults.length} bug{filedResults.length !== 1 ? "s" : ""}
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="text-13 font-medium text-zinc-900">
+                      Filed {filedResults.length} bug{filedResults.length !== 1 ? "s" : ""}
                     </span>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {filedResults.map((r, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-                        <span className="text-sm text-slate-700">{r.tracker} — {r.issue_id}</span>
+                      <div key={i} className="flex items-center justify-between px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-md">
+                        <span className="text-12 text-zinc-600">{r.tracker} — {r.issue_id}</span>
                         {r.url && (
                           <a
                             href={r.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs font-medium text-violet-600 hover:text-violet-700 flex items-center gap-1"
+                            className="text-11 font-medium text-zinc-500 hover:text-zinc-900 flex items-center gap-1"
                           >
                             Open <ExternalLink size={10} />
                           </a>
@@ -421,7 +385,7 @@ export default function ScanDetailPage() {
                     ))}
                   </div>
                   {filingError && (
-                    <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-3">
+                    <div className="bg-red-50 border border-red-200 text-red-600 text-12 rounded-md px-3 py-2">
                       {filingError}
                     </div>
                   )}
@@ -436,8 +400,8 @@ export default function ScanDetailPage() {
                 <>
                   {/* Step 1: Tracker selection */}
                   <div>
-                    <h3 className="text-sm font-medium text-slate-700 mb-3">Select bug tracker</h3>
-                    <div className="grid grid-cols-2 gap-3">
+                    <h3 className="text-11 font-medium text-zinc-400 uppercase tracking-wide mb-3">Select tracker</h3>
+                    <div className="grid grid-cols-2 gap-2">
                       {Object.entries(trackerLogos).map(([type, meta]) => (
                         <button
                           key={type}
@@ -445,20 +409,17 @@ export default function ScanDetailPage() {
                             setSelectedTracker(type);
                             setCredentials({});
                           }}
-                          className={`p-4 rounded-xl border-2 transition-all text-left ${
+                          className={`p-3 rounded-md border text-left transition-colors ${
                             selectedTracker === type
-                              ? "border-violet-500 bg-violet-50"
-                              : "border-slate-200 hover:border-slate-300 bg-white"
+                              ? "border-zinc-900 bg-zinc-50"
+                              : "border-zinc-200 hover:border-zinc-300 bg-white"
                           }`}
                         >
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm"
-                              style={{ backgroundColor: meta.color }}
-                            >
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-md bg-zinc-900 flex items-center justify-center text-white font-semibold text-11">
                               {meta.icon}
                             </div>
-                            <span className="text-sm font-medium text-slate-700">{meta.label}</span>
+                            <span className="text-12 font-medium text-zinc-700">{meta.label}</span>
                           </div>
                         </button>
                       ))}
@@ -469,22 +430,22 @@ export default function ScanDetailPage() {
                   {selectedTracker && trackerFields.length > 0 && (
                     <div>
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-medium text-slate-700">Credentials</h3>
-                        <label className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer">
+                        <h3 className="text-11 font-medium text-zinc-400 uppercase tracking-wide">Credentials</h3>
+                        <label className="flex items-center gap-2 text-11 text-zinc-500 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={useSaved}
                             onChange={(e) => setUseSaved(e.target.checked)}
-                            className="rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                            className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400"
                           />
-                          Use saved credentials
+                          Use saved
                         </label>
                       </div>
                       {!useSaved && (
                         <div className="space-y-3">
                           {trackerFields.map((field) => (
                             <div key={field.key}>
-                              <label className="block text-xs font-medium text-slate-600 mb-1">
+                              <label className="block text-11 font-medium text-zinc-500 mb-1">
                                 {field.label}
                               </label>
                               <input
@@ -510,8 +471,8 @@ export default function ScanDetailPage() {
                   {selectedTracker && issues.length > 0 && (
                     <div>
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-medium text-slate-700">
-                          Issues to file ({selectedIssues.size} of {issues.length})
+                        <h3 className="text-11 font-medium text-zinc-400 uppercase tracking-wide">
+                          Issues ({selectedIssues.size}/{issues.length})
                         </h3>
                         <button
                           onClick={() => {
@@ -521,25 +482,25 @@ export default function ScanDetailPage() {
                               setSelectedIssues(new Set(issues.map((i) => i.id)));
                             }
                           }}
-                          className="text-xs text-violet-600 hover:text-violet-700 font-medium"
+                          className="text-11 text-zinc-500 hover:text-zinc-900 font-medium"
                         >
                           {selectedIssues.size === issues.length ? "Deselect all" : "Select all"}
                         </button>
                       </div>
-                      <div className="max-h-48 overflow-y-auto space-y-1 border border-slate-200 rounded-lg p-2">
+                      <div className="max-h-48 overflow-y-auto space-y-0.5 border border-zinc-200 rounded-md p-1.5">
                         {issues.map((issue) => (
                           <label
                             key={issue.id}
-                            className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                            className="flex items-center gap-2.5 px-2 py-1.5 hover:bg-zinc-50 rounded cursor-pointer transition-colors"
                           >
                             <input
                               type="checkbox"
                               checked={selectedIssues.has(issue.id)}
                               onChange={() => toggleIssue(issue.id)}
-                              className="rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                              className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400"
                             />
                             <span className={`badge-${issue.severity} text-[10px]`}>{issue.severity}</span>
-                            <span className="text-sm text-slate-700 truncate">{issue.title}</span>
+                            <span className="text-12 text-zinc-600 truncate">{issue.title}</span>
                           </label>
                         ))}
                       </div>
@@ -547,23 +508,23 @@ export default function ScanDetailPage() {
                   )}
 
                   {selectedTracker && issues.length === 0 && (
-                    <div className="bg-white border border-slate-200 rounded-xl p-6 text-center text-slate-400 text-sm">
+                    <p className="py-6 text-center text-12 text-zinc-400">
                       No issues available to file
-                    </div>
+                    </p>
                   )}
 
                   {/* Filing progress */}
                   {filing && (
-                    <div className="flex items-center gap-3 p-4 bg-violet-50 border border-violet-200 rounded-lg">
-                      <Loader2 size={16} className="text-violet-500 animate-spin" />
-                      <span className="text-sm text-violet-700">
+                    <div className="flex items-center gap-2 p-3 bg-zinc-50 border border-zinc-200 rounded-md">
+                      <div className="w-3.5 h-3.5 border-2 border-zinc-300 border-t-zinc-900 rounded-full animate-spin" />
+                      <span className="text-12 text-zinc-600">
                         Filing bug {filingProgress + 1} of {selectedIssues.size}...
                       </span>
                     </div>
                   )}
 
                   {filingError && (
-                    <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-3">
+                    <div className="bg-red-50 border border-red-200 text-red-600 text-12 rounded-md px-3 py-2">
                       {filingError}
                     </div>
                   )}
@@ -576,10 +537,8 @@ export default function ScanDetailPage() {
                       className="btn-primary w-full flex items-center justify-center gap-2"
                     >
                       {filing ? (
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <Bug size={16} />
-                      )}
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : null}
                       {filing ? "Filing..." : `File ${selectedIssues.size} Bug${selectedIssues.size !== 1 ? "s" : ""}`}
                     </button>
                   )}

@@ -5,88 +5,97 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import {
-  ScanSearch,
   LayoutDashboard,
-  Plug,
+  ScanSearch,
   Bug,
+  Plug,
   Users,
   LogOut,
 } from "lucide-react";
 
-const navItems = [
+const mainNav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/scan", label: "New Scan", icon: ScanSearch },
   { href: "/scans", label: "Scan History", icon: Bug },
+];
+
+const settingsNav = [
   { href: "/connectors", label: "Connectors", icon: Plug },
   { href: "/team", label: "Team", icon: Users },
 ];
+
+function NavItem({ href, label, icon: Icon, active }: { href: string; label: string; icon: any; active: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "flex items-center gap-2 px-2.5 py-1.5 rounded-md text-13 transition-colors duration-100",
+        active
+          ? "bg-zinc-100 text-zinc-900 font-medium"
+          : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700"
+      )}
+    >
+      <Icon size={16} strokeWidth={1.5} />
+      <span>{label}</span>
+    </Link>
+  );
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, tenant, logout } = useAuth();
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-60 bg-slate-900 flex flex-col z-50">
+    <aside className="fixed left-0 top-0 bottom-0 w-[220px] bg-[#fafafa] border-r border-zinc-200 flex flex-col z-50">
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-slate-700/50">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">R</span>
+      <div className="px-4 py-4">
+        <Link href="/" className="flex items-center gap-2">
+          <div className="w-5 h-5 rounded bg-zinc-900 flex items-center justify-center">
+            <span className="text-white text-11 font-semibold leading-none">R</span>
           </div>
-          <div>
-            <h1 className="font-bold text-lg text-white tracking-tight leading-tight">
-              RepoRat
-            </h1>
-            {tenant && (
-              <p className="text-xs text-slate-400 truncate max-w-[140px] leading-tight">
-                {tenant.name}
-              </p>
-            )}
-          </div>
+          <span className="text-[15px] font-semibold text-zinc-900 tracking-tight">RepoRat</span>
         </Link>
+        {tenant && (
+          <p className="text-11 text-zinc-400 mt-1 truncate pl-7">{tenant.name}</p>
+        )}
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {navItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href;
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-                active
-                  ? "bg-violet-600/20 text-violet-300"
-                  : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
-              )}
-            >
-              <Icon size={18} strokeWidth={1.5} />
-              <span>{label}</span>
-            </Link>
-          );
-        })}
+      <nav className="flex-1 px-2.5 overflow-y-auto">
+        <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-widest px-2.5 mb-1">Main</p>
+        <div className="space-y-0.5">
+          {mainNav.map((item) => (
+            <NavItem key={item.href} {...item} active={pathname === item.href} />
+          ))}
+        </div>
+
+        <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-widest px-2.5 mt-6 mb-1">Settings</p>
+        <div className="space-y-0.5">
+          {settingsNav.map((item) => (
+            <NavItem key={item.href} {...item} active={pathname === item.href} />
+          ))}
+        </div>
       </nav>
 
-      {/* User footer */}
-      <div className="border-t border-slate-700/50 px-4 py-4">
+      {/* User */}
+      <div className="border-t border-zinc-200 px-3 py-3">
         {user && (
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-violet-600/30 text-violet-300 flex items-center justify-center text-sm font-semibold flex-shrink-0">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-7 h-7 rounded-full bg-zinc-200 text-zinc-600 flex items-center justify-center text-11 font-medium flex-shrink-0">
                 {user.name?.charAt(0)?.toUpperCase() || "U"}
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-medium text-slate-200 truncate">{user.name}</p>
-                <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                <p className="text-13 font-medium text-zinc-700 truncate">{user.name}</p>
+                <p className="text-11 text-zinc-400 truncate">{user.email}</p>
               </div>
             </div>
             <button
               onClick={logout}
-              className="p-2 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded-lg transition-colors flex-shrink-0"
+              className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-md hover:bg-zinc-100 transition-colors duration-100 flex-shrink-0"
               title="Sign out"
             >
-              <LogOut size={16} />
+              <LogOut size={14} strokeWidth={1.5} />
             </button>
           </div>
         )}

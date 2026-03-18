@@ -4,21 +4,13 @@ import { useEffect, useState } from "react";
 import Shell from "@/components/layout/Shell";
 import { api } from "@/lib/api";
 import type { ConnectorStatus } from "@/types";
-import {
-  Plug,
-  CheckCircle2,
-  XCircle,
-  RefreshCw,
-  ChevronDown,
-  ChevronUp,
-  Save,
-} from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
-const trackerMeta: Record<string, { label: string; color: string }> = {
-  jira: { label: "Jira Cloud", color: "#2684FF" },
-  azure_boards: { label: "Azure DevOps Boards", color: "#0078D4" },
-  github_issues: { label: "GitHub Issues", color: "#238636" },
-  linear: { label: "Linear", color: "#5E6AD2" },
+const trackerMeta: Record<string, { label: string; description: string }> = {
+  jira: { label: "Jira Cloud", description: "Atlassian Jira issue tracking" },
+  azure_boards: { label: "Azure DevOps", description: "Azure Boards work items" },
+  github_issues: { label: "GitHub Issues", description: "GitHub issue tracker" },
+  linear: { label: "Linear", description: "Linear project management" },
 };
 
 const TRACKER_FIELDS: Record<string, { key: string; label: string; type: string; placeholder: string }[]> = {
@@ -97,7 +89,7 @@ export default function ConnectorsPage() {
       await api.saveConnectorConfig(type, creds);
       setSaveSuccess(type);
       setTimeout(() => setSaveSuccess(null), 3000);
-    } catch (err: any) {
+    } catch {
       setSaveError(type);
       setTimeout(() => setSaveError(null), 5000);
     }
@@ -117,89 +109,69 @@ export default function ConnectorsPage() {
 
   return (
     <Shell>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Connectors</h1>
-          <p className="text-sm text-slate-500 mt-1">Configure bug tracker integrations</p>
-        </div>
-        <button onClick={fetchData} className="btn-secondary flex items-center gap-2">
-          <RefreshCw size={14} />
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-22 font-semibold text-zinc-900">Connectors</h1>
+        <button onClick={fetchData} className="btn-secondary">
           Refresh
         </button>
       </div>
 
       {loading ? (
-        <div className="bg-white border border-slate-200 rounded-xl p-12 text-center shadow-sm">
-          <div className="w-6 h-6 border-2 border-violet-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <div className="py-12 text-center">
+          <div className="w-5 h-5 border-2 border-zinc-300 border-t-zinc-900 rounded-full animate-spin mx-auto" />
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
           {displayConnectors.map((c) => {
-            const meta = trackerMeta[c.type] ?? { label: c.type, color: "#888" };
+            const meta = trackerMeta[c.type] ?? { label: c.type, description: "" };
             const fields = TRACKER_FIELDS[c.type] ?? [];
             const isExpanded = expanded === c.type;
 
             return (
-              <div key={c.type} className="bg-white rounded-xl border border-slate-200 shadow-sm transition-all duration-200 hover:shadow-md">
-                <div className="p-5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div
-                        className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm"
-                        style={{ backgroundColor: meta.color }}
-                      >
-                        {meta.label.charAt(0)}
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-slate-900">
-                          {meta.label}
-                        </h3>
-                        <p className="text-xs text-slate-400 mt-0.5">{c.type}</p>
-                      </div>
+              <div key={c.type} className="bg-white rounded-lg border border-zinc-200 transition-colors duration-150 hover:border-zinc-300">
+                <div className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="text-13 font-medium text-zinc-900">{meta.label}</h3>
+                      <p className="text-11 text-zinc-400 mt-0.5">{meta.description}</p>
                     </div>
+                    {c.connected ? (
+                      <div className="flex items-center gap-1.5 text-11 font-medium text-emerald-600">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        Connected
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-11 font-medium text-zinc-400">
+                        <div className="w-1.5 h-1.5 rounded-full bg-zinc-300" />
+                        Not configured
+                      </div>
+                    )}
+                  </div>
 
-                    <div className="flex items-center gap-3">
-                      {c.connected ? (
-                        <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-medium bg-emerald-50 px-2.5 py-1 rounded-full">
-                          <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                          Connected
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1.5 text-slate-500 text-xs font-medium bg-slate-100 px-2.5 py-1 rounded-full">
-                          <div className="w-2 h-2 rounded-full bg-slate-300" />
-                          Not configured
-                        </div>
-                      )}
-
-                      <button
-                        onClick={() => testConnector(c.type)}
-                        disabled={testing === c.type}
-                        className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
-                      >
-                        {testing === c.type ? (
-                          <div className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <RefreshCw size={10} />
-                        )}
-                        Test
-                      </button>
-                      <button
-                        onClick={() => toggleExpand(c.type)}
-                        className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
-                      >
-                        {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
-                        Configure
-                      </button>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => testConnector(c.type)}
+                      disabled={testing === c.type}
+                      className="btn-secondary text-11 px-2.5 py-1"
+                    >
+                      {testing === c.type ? "Testing..." : "Test"}
+                    </button>
+                    <button
+                      onClick={() => toggleExpand(c.type)}
+                      className="btn-secondary text-11 px-2.5 py-1 flex items-center gap-1"
+                    >
+                      {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                      Configure
+                    </button>
                   </div>
                 </div>
 
                 {/* Expanded config */}
                 {isExpanded && fields.length > 0 && (
-                  <div className="border-t border-slate-200 p-5 space-y-4 bg-slate-50/70 rounded-b-xl">
+                  <div className="border-t border-zinc-200 p-4 space-y-3 bg-zinc-50/50">
                     {fields.map((field) => (
                       <div key={field.key}>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">
+                        <label className="block text-11 font-medium text-zinc-500 mb-1">
                           {field.label}
                         </label>
                         <input
@@ -212,28 +184,19 @@ export default function ConnectorsPage() {
                       </div>
                     ))}
 
-                    <div className="flex items-center gap-3 pt-2">
+                    <div className="flex items-center gap-2 pt-1">
                       <button
                         onClick={() => saveConfig(c.type)}
                         disabled={saving === c.type}
-                        className="btn-primary text-xs px-4 py-2 flex items-center gap-1.5"
+                        className="btn-primary text-11 px-3 py-1.5"
                       >
-                        {saving === c.type ? (
-                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <Save size={12} />
-                        )}
-                        Save Credentials
+                        {saving === c.type ? "Saving..." : "Save"}
                       </button>
                       {saveSuccess === c.type && (
-                        <span className="text-xs text-emerald-600 flex items-center gap-1">
-                          <CheckCircle2 size={12} /> Saved
-                        </span>
+                        <span className="text-11 text-emerald-600">Saved</span>
                       )}
                       {saveError === c.type && (
-                        <span className="text-xs text-red-500 flex items-center gap-1">
-                          <XCircle size={12} /> Failed to save
-                        </span>
+                        <span className="text-11 text-red-500">Failed to save</span>
                       )}
                     </div>
                   </div>

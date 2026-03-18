@@ -3,9 +3,8 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 
 export const metadata: Metadata = {
-  title: "RepoRat - AI-Powered Repo Scanner",
-  description:
-    "Scan repos, auto-generate tests, find bugs, file them. All powered by AI.",
+  title: "RepoRat — AI-Powered Repo Scanner",
+  description: "Scan repos, auto-generate tests, find bugs, file them.",
 };
 
 export default function RootLayout({

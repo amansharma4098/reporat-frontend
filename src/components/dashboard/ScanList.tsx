@@ -2,9 +2,20 @@
 
 import Link from "next/link";
 import type { ScanSummary } from "@/types";
-import StatusIndicator from "@/components/ui/StatusIndicator";
 import { repoName, timeAgo } from "@/lib/utils";
-import { ExternalLink, Bug, TestTube2, FileWarning, ScanSearch, Trash2 } from "lucide-react";
+import { Trash2, ScanSearch } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const dotColor: Record<string, string> = {
+  pending: "bg-zinc-300",
+  cloning: "bg-blue-500 animate-pulse",
+  analyzing: "bg-blue-500 animate-pulse",
+  generating_tests: "bg-blue-500 animate-pulse",
+  running_tests: "bg-blue-500 animate-pulse",
+  filing_bugs: "bg-blue-500 animate-pulse",
+  completed: "bg-emerald-500",
+  failed: "bg-red-500",
+};
 
 interface ScanListProps {
   scans: ScanSummary[];
@@ -14,14 +25,11 @@ interface ScanListProps {
 export default function ScanList({ scans, onDeleteScan }: ScanListProps) {
   if (!scans.length) {
     return (
-      <div className="bg-white border border-slate-200 rounded-xl p-12 text-center shadow-sm">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-100 flex items-center justify-center">
-          <Bug size={28} className="text-slate-300" />
-        </div>
-        <p className="text-slate-500 font-semibold">No scans yet</p>
-        <p className="text-slate-400 text-sm mt-1 mb-4">Start your first scan to see results here</p>
-        <Link href="/scan" className="btn-primary inline-flex items-center gap-2">
-          <ScanSearch size={16} />
+      <div className="py-16 text-center">
+        <p className="text-13 font-medium text-zinc-400">No scans yet</p>
+        <p className="text-12 text-zinc-400 mt-1 mb-4">Start your first scan to see results here</p>
+        <Link href="/scan" className="btn-primary inline-flex items-center gap-1.5">
+          <ScanSearch size={14} strokeWidth={1.5} />
           Start scanning
         </Link>
       </div>
@@ -29,40 +37,37 @@ export default function ScanList({ scans, onDeleteScan }: ScanListProps) {
   }
 
   return (
-    <div className="space-y-2">
+    <div>
+      {/* Header */}
+      <div className="grid grid-cols-[1fr_100px_200px_40px] gap-4 px-3 py-2 border-b border-zinc-200">
+        <span className="text-11 font-medium text-zinc-400 uppercase tracking-wide">Repository</span>
+        <span className="text-11 font-medium text-zinc-400 uppercase tracking-wide">Status</span>
+        <span className="text-11 font-medium text-zinc-400 uppercase tracking-wide">Stats</span>
+        <span />
+      </div>
+      {/* Rows */}
       {scans.map((scan) => (
         <Link
           key={scan.scan_id}
           href={`/scans/${scan.scan_id}`}
-          className="bg-white border border-slate-200 rounded-lg p-4 flex items-center justify-between shadow-sm hover:border-violet-300 hover:shadow-md transition-all duration-200 cursor-pointer group block"
+          className="grid grid-cols-[1fr_100px_200px_40px] gap-4 items-center px-3 py-3 border-b border-zinc-100 hover:bg-zinc-50 transition-colors duration-100 group"
         >
-          <div className="flex items-center gap-4">
-            <StatusIndicator status={scan.status} />
-            <div>
-              <p className="text-sm font-semibold text-slate-900 group-hover:text-violet-600 transition-colors">
-                {repoName(scan.repo_url)}
-              </p>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {timeAgo(scan.started_at)}
-              </p>
-            </div>
+          <div>
+            <p className="text-13 font-medium text-zinc-900">{repoName(scan.repo_url)}</p>
+            <p className="text-12 text-zinc-400">{timeAgo(scan.started_at)}</p>
           </div>
-
-          <div className="flex items-center gap-5 text-xs">
-            <div className="flex items-center gap-1.5 text-slate-400">
-              <FileWarning size={12} />
-              <span className="font-medium">{scan.total_issues}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-slate-400">
-              <TestTube2 size={12} />
-              <span className="text-emerald-600 font-medium">{scan.tests_passed}</span>
-              <span className="text-slate-300">/</span>
-              <span className="text-red-500 font-medium">{scan.tests_failed}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-slate-400">
-              <Bug size={12} />
-              <span className="font-medium">{scan.bugs_filed}</span>
-            </div>
+          <div className="flex items-center gap-1.5">
+            <div className={cn("w-2 h-2 rounded-full", dotColor[scan.status] || "bg-zinc-300")} />
+            <span className="text-12 text-zinc-500 capitalize">{scan.status}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-11 bg-zinc-100 text-zinc-500 px-1.5 py-0.5 rounded">{scan.total_issues} issues</span>
+            <span className="text-11 bg-zinc-100 text-zinc-500 px-1.5 py-0.5 rounded">{scan.tests_generated} tests</span>
+            {scan.bugs_filed > 0 && (
+              <span className="text-11 bg-zinc-100 text-zinc-500 px-1.5 py-0.5 rounded">{scan.bugs_filed} bugs</span>
+            )}
+          </div>
+          <div className="flex justify-end">
             {onDeleteScan && (
               <button
                 onClick={(e) => {
@@ -70,13 +75,12 @@ export default function ScanList({ scans, onDeleteScan }: ScanListProps) {
                   e.stopPropagation();
                   onDeleteScan(scan.scan_id);
                 }}
-                className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                className="p-1 text-zinc-300 hover:text-zinc-500 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-100"
                 title="Delete scan"
               >
-                <Trash2 size={14} />
+                <Trash2 size={14} strokeWidth={1.5} />
               </button>
             )}
-            <ExternalLink size={14} className="text-slate-300 group-hover:text-violet-500 transition-colors" />
           </div>
         </Link>
       ))}

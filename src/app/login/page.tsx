@@ -28,32 +28,30 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md page-enter">
+    <div className="min-h-screen bg-[#fafafa] flex items-center justify-center p-4">
+      <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-violet-600 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">R</span>
+          <div className="inline-flex items-center gap-2.5 mb-2">
+            <div className="w-8 h-8 rounded-md bg-zinc-900 flex items-center justify-center">
+              <span className="text-white font-semibold text-13">R</span>
             </div>
-            <h1 className="font-bold text-2xl text-white tracking-tight">
-              RepoRat
-            </h1>
+            <span className="font-semibold text-[18px] text-zinc-900 tracking-tight">RepoRat</span>
           </div>
-          <p className="text-slate-400 text-sm">Sign in to your account</p>
+          <p className="text-12 text-zinc-400 mt-1">Sign in to your account</p>
         </div>
 
         {/* Card */}
-        <div className="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="bg-white rounded-lg border border-zinc-200 p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3">
+              <div className="bg-red-50 border border-red-200 text-red-600 text-12 rounded-md px-3 py-2">
                 {error}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label className="block text-11 font-medium text-zinc-500 uppercase tracking-wide mb-1.5">
                 Email
               </label>
               <input
@@ -61,13 +59,13 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@company.com"
-                className="w-full h-11 bg-slate-700/50 border border-slate-600 rounded-lg px-4 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all"
+                className="input-field w-full"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label className="block text-11 font-medium text-zinc-500 uppercase tracking-wide mb-1.5">
                 Password
               </label>
               <input
@@ -75,7 +73,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                className="w-full h-11 bg-slate-700/50 border border-slate-600 rounded-lg px-4 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all"
+                className="input-field w-full"
                 required
               />
             </div>
@@ -83,19 +81,19 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full h-11 flex items-center justify-center gap-2"
+              className="btn-primary w-full h-9 flex items-center justify-center gap-2"
             >
               {loading && (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               )}
               {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
         </div>
 
-        <p className="text-center mt-6 text-sm text-slate-500">
+        <p className="text-center mt-5 text-12 text-zinc-400">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-violet-400 hover:text-violet-300 font-medium">
+          <Link href="/signup" className="text-zinc-900 font-medium hover:underline">
             Sign up
           </Link>
         </p>

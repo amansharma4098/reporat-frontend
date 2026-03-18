@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import type { Severity } from "@/types";
 
 const styles: Record<Severity, string> = {
@@ -10,5 +9,5 @@ const styles: Record<Severity, string> = {
 };
 
 export default function SeverityBadge({ severity }: { severity: Severity }) {
-  return <span className={cn(styles[severity])}>{severity}</span>;
+  return <span className={styles[severity]}>{severity}</span>;
 }

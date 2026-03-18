@@ -1,28 +1,23 @@
 import { cn } from "@/lib/utils";
 import { statusLabels } from "@/lib/utils";
 import type { ScanStatus } from "@/types";
-import { Loader2, CheckCircle2, XCircle, Clock } from "lucide-react";
 
-const statusConfig: Record<string, { color: string; icon: typeof Loader2 }> = {
-  pending: { color: "text-slate-400", icon: Clock },
-  cloning: { color: "text-blue-500", icon: Loader2 },
-  analyzing: { color: "text-amber-500", icon: Loader2 },
-  generating_tests: { color: "text-purple-500", icon: Loader2 },
-  running_tests: { color: "text-orange-500", icon: Loader2 },
-  filing_bugs: { color: "text-cyan-500", icon: Loader2 },
-  completed: { color: "text-emerald-600", icon: CheckCircle2 },
-  failed: { color: "text-red-500", icon: XCircle },
+const dotColor: Record<string, string> = {
+  pending: "bg-zinc-300",
+  cloning: "bg-blue-500 animate-pulse",
+  analyzing: "bg-blue-500 animate-pulse",
+  generating_tests: "bg-blue-500 animate-pulse",
+  running_tests: "bg-blue-500 animate-pulse",
+  filing_bugs: "bg-blue-500 animate-pulse",
+  completed: "bg-emerald-500",
+  failed: "bg-red-500",
 };
 
 export default function StatusIndicator({ status }: { status: ScanStatus }) {
-  const config = statusConfig[status] || statusConfig.pending;
-  const Icon = config.icon;
-  const isSpinning = !["completed", "failed", "pending"].includes(status);
-
   return (
-    <div className={cn("flex items-center gap-2", config.color)}>
-      <Icon size={14} className={isSpinning ? "animate-spin" : ""} />
-      <span className="text-xs font-medium">{statusLabels[status] || status}</span>
+    <div className="flex items-center gap-2">
+      <div className={cn("w-2 h-2 rounded-full", dotColor[status] || "bg-zinc-300")} />
+      <span className="text-12 text-zinc-500">{statusLabels[status] || status}</span>
     </div>
   );
 }

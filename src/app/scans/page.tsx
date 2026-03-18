@@ -47,21 +47,18 @@ export default function ScansPage() {
 
   return (
     <Shell>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Scan History</h1>
-          <p className="text-sm text-slate-500 mt-1">All repository scans</p>
-        </div>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-22 font-semibold text-zinc-900">Scan History</h1>
         {scans.length > 0 && (
           <button
             onClick={handleClearAll}
             disabled={clearing}
-            className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-700 transition-colors font-medium"
+            className="btn-danger flex items-center gap-1.5"
           >
             {clearing ? (
-              <div className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+              <div className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
             ) : (
-              <Trash2 size={14} />
+              <Trash2 size={13} strokeWidth={1.5} />
             )}
             Clear All
           </button>
@@ -69,9 +66,9 @@ export default function ScansPage() {
       </div>
 
       {loading ? (
-        <div className="bg-white border border-slate-200 rounded-xl p-12 text-center shadow-sm">
-          <div className="w-6 h-6 border-2 border-violet-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-slate-400 text-sm">Loading...</p>
+        <div className="py-12 text-center">
+          <div className="w-5 h-5 border-2 border-zinc-300 border-t-zinc-900 rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-12 text-zinc-400">Loading...</p>
         </div>
       ) : (
         <ScanList scans={scans} onDeleteScan={handleDeleteScan} />

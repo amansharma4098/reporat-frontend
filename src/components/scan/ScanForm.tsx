@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { api } from "@/lib/api";
 import type { RepoSource } from "@/types";
-import { ScanSearch, GitBranch, Zap, Shield } from "lucide-react";
 
 const repoSources: { value: RepoSource; label: string }[] = [
   { value: "github", label: "GitHub" },
@@ -50,10 +49,10 @@ export default function ScanForm({ onScanStarted }: Props) {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Repo URL */}
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+        <label className="block text-11 font-medium text-zinc-500 uppercase tracking-wide mb-1.5">
           Repository URL
         </label>
         <input
@@ -65,11 +64,10 @@ export default function ScanForm({ onScanStarted }: Props) {
         />
       </div>
 
-      {/* Branch + Source Row */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Branch + Source */}
+      <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">
-            <GitBranch size={12} className="inline mr-1" />
+          <label className="block text-11 font-medium text-zinc-500 uppercase tracking-wide mb-1.5">
             Branch
           </label>
           <input
@@ -80,8 +78,8 @@ export default function ScanForm({ onScanStarted }: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">
-            Repo Source
+          <label className="block text-11 font-medium text-zinc-500 uppercase tracking-wide mb-1.5">
+            Source
           </label>
           <select
             value={repoSource}
@@ -95,15 +93,15 @@ export default function ScanForm({ onScanStarted }: Props) {
         </div>
       </div>
 
-      {/* Toggle switches */}
+      {/* Toggles */}
       <div className="flex gap-4">
-        <ToggleSwitch label="Static Analysis" icon={Shield} checked={staticAnalysis} onChange={setStaticAnalysis} />
-        <ToggleSwitch label="AI Tests" icon={Zap} checked={aiTests} onChange={setAiTests} />
+        <ToggleSwitch label="Static Analysis" checked={staticAnalysis} onChange={setStaticAnalysis} />
+        <ToggleSwitch label="AI Tests" checked={aiTests} onChange={setAiTests} />
       </div>
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-2">
+        <div className="bg-red-50 border border-red-200 text-red-600 text-12 rounded-md px-3 py-2">
           {error}
         </div>
       )}
@@ -112,14 +110,12 @@ export default function ScanForm({ onScanStarted }: Props) {
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="btn-primary w-full h-11 flex items-center justify-center gap-2"
+        className="btn-primary w-full h-9 flex items-center justify-center gap-2"
       >
         {loading ? (
-          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-        ) : (
-          <ScanSearch size={16} />
-        )}
-        {loading ? "Starting Scan..." : "Start Scan"}
+          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        ) : null}
+        {loading ? "Starting..." : "Start Scan"}
       </button>
     </div>
   );
@@ -127,39 +123,32 @@ export default function ScanForm({ onScanStarted }: Props) {
 
 function ToggleSwitch({
   label,
-  icon: Icon,
   checked,
   onChange,
 }: {
   label: string;
-  icon: any;
   checked: boolean;
   onChange: (v: boolean) => void;
 }) {
   return (
     <button
       onClick={() => onChange(!checked)}
-      className="flex items-center gap-3 group"
+      className="flex items-center gap-2.5"
     >
-      {/* Switch track */}
       <div
-        className={`relative w-10 h-[22px] rounded-full transition-colors duration-200 ${
-          checked ? "bg-violet-500" : "bg-slate-200"
+        className={`relative w-8 h-[18px] rounded-full transition-colors duration-200 ${
+          checked ? "bg-zinc-900" : "bg-zinc-200"
         }`}
       >
-        {/* Switch thumb */}
         <div
-          className={`absolute top-[3px] w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${
-            checked ? "translate-x-[22px]" : "translate-x-[3px]"
+          className={`absolute top-[2px] w-[14px] h-[14px] bg-white rounded-full shadow-sm transition-transform duration-200 ${
+            checked ? "translate-x-[16px]" : "translate-x-[2px]"
           }`}
         />
       </div>
-      <div className="flex items-center gap-1.5">
-        <Icon size={14} className={checked ? "text-violet-600" : "text-slate-400"} />
-        <span className={`text-sm font-medium ${checked ? "text-slate-700" : "text-slate-400"}`}>
-          {label}
-        </span>
-      </div>
+      <span className={`text-12 font-medium ${checked ? "text-zinc-700" : "text-zinc-400"}`}>
+        {label}
+      </span>
     </button>
   );
 }
